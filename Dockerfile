@@ -3,8 +3,11 @@ FROM docker.io/library/node:24-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 # npm install respeta package-lock.json; se usa en lugar de "npm ci" porque el lock
-# generado en glibc omite dependencias opcionales de sharp para Alpine (musl)
-RUN npm install --no-audit --no-fund
+# generado en glibc omite dependencias opcionales de sharp para Alpine (musl).
+# --ignore-scripts: evita el error ETXTBSY de esbuild en Podman/overlay (su install.js
+# ejecuta el binario recién escrito). Ningún paquete lo necesita: los binarios nativos
+# ya vienen precompilados en paquetes opcionales.
+RUN npm install --no-audit --no-fund --ignore-scripts
 
 # ---- 2. Build (valida las preguntas y genera las páginas estáticas) ----
 FROM docker.io/library/node:24-alpine AS builder

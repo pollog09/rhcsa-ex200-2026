@@ -130,6 +130,15 @@ git pull && podman build -t rhcsa-ex200-2026 . \
 
 Si aparece el aviso `Using cgroups-v1 which is deprecated`, es solo informativo: el contenedor funciona igual. Para ocultarlo, ejecuta `export PODMAN_IGNORE_CGROUPSV1_WARNING=1`.
 
+### Problemas frecuentes con Podman
+
+| Síntoma | Solución |
+|---|---|
+| `npm error ... esbuild ... ETXTBSY` durante el build | Tienes una copia vieja del repo. Actualízala con `git pull` y vuelve a construir con `podman build --no-cache -t rhcsa-ex200-2026 .` |
+| `EADDRINUSE: address already in use 0.0.0.0:3000` | Otro proceso usa el puerto 3000, por ejemplo Docker en otra distro de WSL. Detenlo o usa `-e PORT=3002` |
+| El sitio abre dentro de WSL pero no en Windows | Arranca el contenedor con `--network host`, como se indica arriba |
+| Usas `podman-compose up -d --build` | Funciona, pero publica el puerto con `-p` y, en modo rootless, Windows no lo ve en `localhost`. Ábrelo con la IP de WSL (`hostname -I`) o usa el `podman run --network host` de arriba |
+
 ### Alternativa: Docker Desktop
 
 Si ya tienes **Docker Desktop** en Windows, ve a *Settings → Resources → WSL integration*, activa la distro de RHEL y usa los comandos de la [Opción 1](#opción-1-docker-recomendado) (`docker compose up -d --build`).
