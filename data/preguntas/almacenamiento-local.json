@@ -1,0 +1,228 @@
+[
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "tarea",
+    "id": "alm-01",
+    "dificultad": "facil",
+    "titulo": "Crear una partición GPT de 1 GiB",
+    "enunciado": "El disco **/dev/vdb** está vacío y sin tabla de particiones.\n\n1. Crea en él una tabla de particiones **GPT**.\n2. Crea una partición de **1 GiB** (desde 1 MiB hasta 1025 MiB) llamada `datos1`.\n3. Comprueba que el kernel ve la nueva partición **/dev/vdb1**.\n\nNo hace falta darle formato todavía.",
+    "pistas": [
+      "Antes de nada, mira los discos con `lsblk`. El nombre del disco puede variar según la máquina: vdb, sdb o nvme0n1 (en NVMe la partición se llama nvme0n1p1).",
+      "Con `parted` puedes usar `mklabel gpt` y luego `mkpart <nombre> <inicio> <fin>`. Usa unidades MiB para que quede alineada.",
+      "Después de crear particiones, `udevadm settle` espera a que aparezca el dispositivo en /dev."
+    ],
+    "solucion": "# Ver discos y comprobar que vdb está vacío\nlsblk\n# Crear la tabla de particiones GPT (borra la tabla anterior, ¡cuidado!)\nparted -s /dev/vdb mklabel gpt\n# Crear la partición de 1 GiB (en GPT, \"datos1\" es el nombre de la partición)\nparted -s /dev/vdb mkpart datos1 1MiB 1025MiB\n# Esperar a que udev cree /dev/vdb1\nudevadm settle\n# Listar la tabla de particiones\nparted /dev/vdb print",
+    "verificacion": "lsblk /dev/vdb\n# Debe aparecer vdb1 de 1G\nparted /dev/vdb print\n# \"Partition Table: gpt\" y una partición llamada datos1\n# La tabla está en disco: tras reiniciar, vdb1 debe seguir apareciendo en lsblk",
+    "explicacion": "Con GPT no existen particiones primarias ni extendidas: en `mkpart` el primer argumento es solo un nombre. Usar MiB como unidad evita avisos de alineación. Si el disco ya tenía datos, `mklabel` los hace inaccesibles, así que revisa siempre con `lsblk` antes."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "tarea",
+    "id": "alm-02",
+    "dificultad": "media",
+    "titulo": "VG datavg con PE de 16M y LV de 50 extents",
+    "enunciado": "Usando el disco vacío **/dev/vdc**:\n\n1. Crea una tabla GPT y una partición de **1 GiB** para LVM.\n2. Crea un grupo de volúmenes llamado **datavg** con un tamaño de extensión física (PE) de **16 MiB**.\n3. Crea un volumen lógico llamado **datalv** con un tamaño de **50 extents**.\n4. Dale formato **XFS** y móntalo en **/data**.\n5. El montaje debe ser **persistente** (usa el UUID en /etc/fstab).",
+    "pistas": [
+      "El tamaño de PE se elige al crear el VG con `vgcreate -s 16M`. No se puede cambiar después si ya hay LVs.",
+      "Para indicar extents usa `lvcreate -l 50` (ele minúscula). `-L` (mayúscula) es para tamaños como 800M.",
+      "Saca el UUID con `blkid` y, tras editar /etc/fstab, ejecuta `systemctl daemon-reload` y `mount -a`."
+    ],
+    "solucion": "# 1. Partición para LVM (el disco puede llamarse sdc o nvme1n1 en tu equipo)\nparted -s /dev/vdc mklabel gpt\nparted -s /dev/vdc mkpart lvm1 1MiB 1025MiB\nparted -s /dev/vdc set 1 lvm on\nudevadm settle\n\n# 2. PV y VG con PE de 16 MiB\npvcreate /dev/vdc1\nvgcreate -s 16M datavg /dev/vdc1\n\n# 3. LV de 50 extents (50 x 16 MiB = 800 MiB)\nlvcreate -l 50 -n datalv datavg\n\n# 4. Sistema de archivos y punto de montaje\nmkfs.xfs /dev/datavg/datalv\nmkdir -p /data\n\n# 5. Montaje persistente por UUID\nblkid /dev/datavg/datalv\n# Añade a /etc/fstab (usa TU UUID):\n# UUID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  /data  xfs  defaults  0 0\necho \"UUID=$(blkid -s UUID -o value /dev/datavg/datalv)  /data  xfs  defaults  0 0\" >> /etc/fstab\nsystemctl daemon-reload\nmount -a",
+    "verificacion": "vgdisplay datavg | grep \"PE Size\"      # 16.00 MiB\nlvs -o lv_name,lv_size,seg_size_pe datavg  # datalv 800.00m, 50 extents\nlvdisplay /dev/datavg/datalv | grep \"Current LE\"   # 50\n# Probar la persistencia sin reiniciar\numount /data\nmount -a\nfindmnt /data        # debe mostrar xfs montado desde datavg-datalv\ndf -h /data\n# Prueba final: reinicia (systemctl reboot) y vuelve a ejecutar findmnt /data",
+    "explicacion": "50 extents de 16 MiB son 800 MiB. El error típico es usar `-L 50` (serían 50 MiB) en lugar de `-l 50`. Montar por UUID evita problemas si el nombre del disco cambia entre arranques."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "tarea",
+    "id": "alm-03",
+    "dificultad": "media",
+    "titulo": "Añadir 512 MiB de swap sin tocar la existente",
+    "enunciado": "El sistema ya tiene una swap en uso que **no debes modificar ni desactivar**.\n\nEn el disco **/dev/vdb** ya existe la partición **/dev/vdb1** (de 1 MiB a 1025 MiB) con datos. Sin destruir esos datos:\n\n1. Crea una nueva partición **/dev/vdb2** de **512 MiB** en el espacio libre.\n2. Configúrala como **swap** y actívala.\n3. Haz que se active automáticamente en cada arranque.\n\nAl terminar, el sistema debe tener **las dos** swaps activas.",
+    "pistas": [
+      "Con `parted /dev/vdb print free` ves dónde empieza el espacio libre. Crea la nueva partición a partir de 1025MiB.",
+      "Los comandos clave son `mkswap` y `swapon`. En /etc/fstab el punto de montaje de una swap es `none`.",
+      "`swapon --show` lista todas las swaps activas. No uses `swapoff -a`: desactivaría también la swap original."
+    ],
+    "solucion": "# Ver swap actual (no la tocaremos)\nswapon --show\n# Ver el espacio libre del disco\nparted /dev/vdb print free\n# Crear vdb2 de 512 MiB justo después de vdb1 (no afecta a vdb1)\nparted -s /dev/vdb mkpart swap2 linux-swap 1025MiB 1537MiB\nudevadm settle\n\n# Formatear como swap\nmkswap /dev/vdb2\n\n# Entrada persistente en /etc/fstab (usa tu UUID)\necho \"UUID=$(blkid -s UUID -o value /dev/vdb2)  none  swap  defaults  0 0\" >> /etc/fstab\nsystemctl daemon-reload\n\n# Activar todas las swaps de fstab (la antigua ya está activa y no cambia)\nswapon -a",
+    "verificacion": "swapon --show     # deben aparecer la swap original y /dev/vdb2 (512M)\nfree -h           # el total de Swap aumenta en ~512 MiB\ngrep swap /etc/fstab\nlsblk /dev/vdb    # vdb1 sigue ahí intacta\n# Reinicia (systemctl reboot) y comprueba de nuevo con swapon --show",
+    "explicacion": "Añadir una partición en espacio libre no afecta a las que ya existen. `swapon -a` activa las swaps de fstab que aún no estén activas, así que es la mejor forma de probar la entrada. Un error típico es poner un punto de montaje real en vez de `none`, o equivocarse de dispositivo en `mkswap` y borrar datos."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "opcion",
+    "solucion": "",
+    "verificacion": "",
+    "id": "alm-04",
+    "dificultad": "facil",
+    "titulo": "Tamaño de extensión física al crear un VG",
+    "enunciado": "Necesitas crear el grupo de volúmenes **vg01** sobre el PV **/dev/vdb1** con un tamaño de extensión física (PE) de **8 MiB**. ¿Qué comando es correcto?",
+    "pistas": [
+      "El tamaño de PE es una propiedad del grupo de volúmenes, no del PV ni del LV."
+    ],
+    "opciones": [
+      "vgcreate -l 8M vg01 /dev/vdb1",
+      "pvcreate -s 8M /dev/vdb1 && vgcreate vg01 /dev/vdb1",
+      "vgcreate -s 8M vg01 /dev/vdb1",
+      "lvcreate -s 8M vg01 /dev/vdb1"
+    ],
+    "correcta": 2,
+    "explicacion": "`vgcreate -s` (o `--physicalextentsize`) fija el tamaño de PE. En vgcreate, `-l` limita el número máximo de LVs; `pvcreate` no define el PE; y `lvcreate -s` crea una instantánea (snapshot). Compruébalo con `vgdisplay vg01 | grep \"PE Size\"`."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "tarea",
+    "id": "alm-05",
+    "dificultad": "facil",
+    "titulo": "Borrar una partición que está en fstab",
+    "enunciado": "La partición **/dev/vdb3** ya no se usa. Está montada en **/temporal** y tiene una entrada en **/etc/fstab**.\n\nElimina la partición de forma limpia, de modo que el sistema siga arrancando sin errores. Las particiones vdb1 y vdb2 no se deben tocar.",
+    "pistas": [
+      "Primero desmonta y quita la línea de /etc/fstab. Si dejas la línea, el siguiente arranque puede entrar en modo de emergencia.",
+      "En `parted`, `rm <número>` borra la partición con ese número."
+    ],
+    "solucion": "# Ver qué hay montado y la entrada de fstab\nfindmnt /temporal\ngrep temporal /etc/fstab\n# Desmontar\numount /temporal\n# Quitar la línea de fstab (o edítala con vim y bórrala a mano)\nsed -i '/[[:space:]]\\/temporal[[:space:]]/d' /etc/fstab\nsystemctl daemon-reload\n# (Opcional) borrar la firma del sistema de archivos\nwipefs -a /dev/vdb3\n# Borrar la partición número 3\nparted -s /dev/vdb rm 3\nudevadm settle",
+    "verificacion": "lsblk /dev/vdb             # ya no aparece vdb3; vdb1 y vdb2 siguen\ngrep temporal /etc/fstab   # sin resultado\nmount -a                   # no debe dar errores\nfindmnt --verify           # revisa que fstab es coherente\n# Reinicia para confirmar que el sistema arranca normalmente",
+    "explicacion": "El orden importa: desmontar, limpiar fstab y después borrar la partición. Si fstab apunta a un dispositivo que ya no existe, systemd puede esperar y acabar en modo de emergencia al arrancar. `findmnt --verify` detecta este tipo de errores."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "tarea",
+    "id": "alm-06",
+    "dificultad": "media",
+    "titulo": "Montar un XFS por etiqueta (LABEL)",
+    "enunciado": "La partición **/dev/vdb1** ya tiene un sistema de archivos **XFS** con datos importantes. No debes volver a formatearla.\n\n1. Ponle la etiqueta **BACKUP**.\n2. Haz que se monte en **/backup** en cada arranque usando **LABEL=** en /etc/fstab (no el nombre del dispositivo ni el UUID).",
+    "pistas": [
+      "Para XFS la etiqueta se cambia con `xfs_admin -L` y el sistema de archivos debe estar desmontado. Para ext4 sería `e2label`.",
+      "Con `blkid /dev/vdb1` o `lsblk -f` ves la etiqueta actual.",
+      "Las etiquetas XFS pueden tener como máximo 12 caracteres."
+    ],
+    "solucion": "# Si estuviera montada, desmontarla (xfs_admin no funciona con XFS montado)\numount /dev/vdb1 2>/dev/null\n# Poner la etiqueta (no borra datos)\nxfs_admin -L BACKUP /dev/vdb1\n# Comprobar\nblkid /dev/vdb1\n# Punto de montaje\nmkdir -p /backup\n# Entrada en /etc/fstab\necho \"LABEL=BACKUP  /backup  xfs  defaults  0 0\" >> /etc/fstab\nsystemctl daemon-reload\nmount -a",
+    "verificacion": "lsblk -f /dev/vdb1          # LABEL = BACKUP\ngrep BACKUP /etc/fstab\numount /backup && mount -a\nfindmnt /backup             # SOURCE /dev/vdb1, FSTYPE xfs\nls /backup                  # los datos siguen ahí\n# Reinicia y confirma con findmnt /backup",
+    "explicacion": "`xfs_admin -L` solo cambia la etiqueta, no toca los datos. Si el sistema de archivos fuera ext4 usarías `e2label /dev/vdb1 BACKUP` (que sí funciona montado). Un error típico es repetir la misma etiqueta en dos dispositivos: el montaje por LABEL se vuelve ambiguo."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "tarea",
+    "id": "alm-07",
+    "dificultad": "media",
+    "titulo": "Swap en un volumen lógico",
+    "enunciado": "El grupo de volúmenes **datavg** tiene espacio libre.\n\n1. Crea un volumen lógico llamado **swaplv** de **256 MiB** en datavg.\n2. Úsalo como espacio de **swap** y actívalo.\n3. Debe activarse en cada arranque. No modifiques las demás swaps del sistema.",
+    "pistas": [
+      "Comprueba el espacio libre con `vgs datavg` (columna VFree).",
+      "Un LV de swap se prepara igual que una partición: `mkswap` y `swapon`.",
+      "En fstab puedes usar la ruta `/dev/datavg/swaplv` (estable, no cambia) o el UUID."
+    ],
+    "solucion": "vgs datavg\n# Crear el LV (si datavg usa PE de 16M, 256M son 16 extents)\nlvcreate -L 256M -n swaplv datavg\n# Formato de swap\nmkswap /dev/datavg/swaplv\n# Entrada persistente\necho \"/dev/datavg/swaplv  none  swap  defaults  0 0\" >> /etc/fstab\nsystemctl daemon-reload\n# Activar\nswapon -a",
+    "verificacion": "lvs datavg                 # swaplv 256.00m\nswapon --show              # aparece /dev/dm-X de 256M además de la swap original\nfree -h\ngrep swaplv /etc/fstab\n# Reinicia y vuelve a comprobar con swapon --show",
+    "explicacion": "Los nombres de LV (`/dev/<vg>/<lv>` o `/dev/mapper/<vg>-<lv>`) no cambian entre arranques, así que son seguros en fstab igual que el UUID. `swapon --show` muestra el LV como /dev/dm-N porque es un dispositivo de device-mapper."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "tarea",
+    "id": "alm-08",
+    "dificultad": "media",
+    "titulo": "Ampliar un VG con una partición nueva",
+    "enunciado": "El grupo de volúmenes **appvg** se ha quedado sin espacio libre. Tienes un disco nuevo **/dev/vdc** que ya tiene tabla **GPT** pero ninguna partición.\n\n1. Crea con **gdisk** (o fdisk) una partición **/dev/vdc1** de **2 GiB** de tipo **Linux LVM**.\n2. Conviértela en volumen físico.\n3. Añádela a **appvg** sin afectar a los LVs existentes.",
+    "pistas": [
+      "En gdisk el código de tipo Linux LVM es `8e00`. En fdisk (con GPT) puedes cambiar el tipo con `t` y escribir `lvm`.",
+      "Para escribir los cambios: `w` (en gdisk confirma con `Y`).",
+      "El comando que añade un PV a un VG existente es `vgextend`."
+    ],
+    "solucion": "# Crear la partición de forma interactiva con gdisk\ngdisk /dev/vdc\n#   n        -> nueva partición\n#   <Enter>  -> número 1\n#   <Enter>  -> primer sector por defecto\n#   +2G      -> tamaño\n#   8e00     -> tipo Linux LVM\n#   w, Y     -> escribir y confirmar\n#\n# Alternativa con fdisk: n, <Enter>, <Enter>, +2G, t, lvm, w\n\n# Asegurar que el kernel ve la partición\npartprobe /dev/vdc\nudevadm settle\n\n# Crear el PV y ampliar el VG\npvcreate /dev/vdc1\nvgextend appvg /dev/vdc1",
+    "verificacion": "lsblk /dev/vdc              # vdc1 de 2G\npvs                         # /dev/vdc1 pertenece a appvg\nvgs appvg                   # VFree ahora ~2 GiB\nlvs appvg                   # los LVs existentes siguen igual\n# LVM guarda sus metadatos en disco: tras reiniciar, vgs debe mostrar lo mismo",
+    "explicacion": "`vgextend` solo suma espacio al VG; no toca los LVs ni sus datos. Si olvidas `pvcreate`, vgextend lo hace automáticamente en versiones recientes, pero es buena costumbre hacerlo explícitamente. El tipo de partición LVM es informativo, pero ayuda a identificarla."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "tarea",
+    "id": "alm-09",
+    "dificultad": "dificil",
+    "titulo": "Retirar un PV de un VG sin perder datos",
+    "enunciado": "El grupo de volúmenes **appvg** está formado por dos volúmenes físicos: **/dev/vdb1** y **/dev/vdc1**. Hay que retirar el disco **vdb**.\n\nSin desmontar nada y sin perder datos:\n\n1. Mueve todos los datos de **/dev/vdb1** a otros PVs del grupo.\n2. Quita **/dev/vdb1** de appvg.\n3. Elimina la marca de PV de **/dev/vdb1**.\n\nSe asume que /dev/vdc1 tiene suficiente espacio libre.",
+    "pistas": [
+      "Mira cuántos extents usa cada PV con `pvs -o+pv_used`. El espacio libre del resto debe ser mayor o igual.",
+      "`pvmove` mueve los extents en caliente, con los LVs montados.",
+      "Después: `vgreduce` saca el PV del grupo y `pvremove` borra su etiqueta LVM."
+    ],
+    "solucion": "# Ver el uso de cada PV\npvs -o+pv_used\n# Mover los datos de vdb1 al resto de PVs de appvg (puede tardar)\npvmove /dev/vdb1\n# Sacar vdb1 del grupo\nvgreduce appvg /dev/vdb1\n# Quitar la etiqueta de PV\npvremove /dev/vdb1",
+    "verificacion": "pvs                 # /dev/vdb1 ya no aparece como PV\nvgs appvg           # #PV = 1\nlvs appvg           # todos los LVs siguen existiendo\ndf -h               # los sistemas de archivos siguen montados y con sus datos\n# Tras reiniciar, todos los montajes de fstab deben seguir funcionando: findmnt --verify",
+    "explicacion": "`vgreduce` falla si el PV aún tiene extents en uso; por eso primero se usa `pvmove`. `pvremove` sobre un PV que todavía pertenece a un VG también da error, así que el orden es pvmove, vgreduce y pvremove."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "tarea",
+    "id": "alm-10",
+    "dificultad": "facil",
+    "titulo": "Eliminar un volumen lógico montado",
+    "enunciado": "El volumen lógico **oldlv** del grupo **datavg** está montado en **/old** y tiene una entrada en /etc/fstab. Ya no se necesita.\n\nElimínalo de forma que el espacio vuelva a datavg y el sistema arranque sin errores.",
+    "pistas": [
+      "No puedes borrar un LV montado: desmóntalo primero.",
+      "Recuerda quitar la entrada de /etc/fstab y ejecutar `systemctl daemon-reload`."
+    ],
+    "solucion": "# Desmontar\numount /old\n# Quitar la línea de fstab (revisa antes con grep)\ngrep -n old /etc/fstab\nvim /etc/fstab        # borra la línea de /old\nsystemctl daemon-reload\n# Borrar el LV (-y evita la pregunta de confirmación)\nlvremove -y /dev/datavg/oldlv",
+    "verificacion": "lvs datavg          # oldlv ya no existe\nvgs datavg          # VFree ha aumentado\ngrep /old /etc/fstab   # sin resultado\nmount -a && findmnt --verify   # sin errores\n# Reinicia para confirmar que arranca sin entrar en modo de emergencia",
+    "explicacion": "Si el LV está montado, `lvremove` responde \"Logical volume in use\". Si borras el LV pero dejas la línea en fstab, el siguiente arranque esperará un dispositivo que no existe."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "opcion",
+    "solucion": "",
+    "verificacion": "",
+    "id": "alm-11",
+    "dificultad": "media",
+    "titulo": "Crear un LV indicando extents",
+    "enunciado": "El grupo **vg01** usa un tamaño de PE de **32 MiB**. Necesitas un volumen lógico **lv01** de exactamente **20 extents**. ¿Qué comando lo crea y qué tamaño tendrá?",
+    "pistas": [
+      "Fíjate en la diferencia entre `-l` minúscula y `-L` mayúscula."
+    ],
+    "opciones": [
+      "lvcreate -L 20 -n lv01 vg01   (tamaño: 640 MiB)",
+      "lvcreate -l 20 -n lv01 vg01   (tamaño: 640 MiB)",
+      "lvcreate -l 20M -n lv01 vg01  (tamaño: 20 MiB)",
+      "lvcreate -L 20E -n lv01 vg01  (tamaño: 20 extents)"
+    ],
+    "correcta": 1,
+    "explicacion": "`-l` indica número de extents: 20 x 32 MiB = 640 MiB. `-L 20` significa 20 MiB (se redondea a 1 extent de 32 MiB). `-l` no acepta unidades como M, y en `-L` la E significa exabytes, no extents."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "opcion",
+    "solucion": "",
+    "verificacion": "",
+    "id": "alm-12",
+    "dificultad": "facil",
+    "titulo": "Línea correcta de swap en /etc/fstab",
+    "enunciado": "Has creado una swap en /dev/vdb2 con `mkswap`. ¿Cuál de estas líneas de **/etc/fstab** la activa correctamente en cada arranque?",
+    "pistas": [
+      "Los campos de fstab son: dispositivo, punto de montaje, tipo, opciones, dump y fsck."
+    ],
+    "opciones": [
+      "UUID=5f2c...e1  none  swap  defaults  0 0",
+      "UUID=5f2c...e1  swap  none  defaults  0 0",
+      "UUID=5f2c...e1  /swap  xfs  defaults  0 0",
+      "swapon UUID=5f2c...e1  defaults  0 0"
+    ],
+    "correcta": 0,
+    "explicacion": "Una swap no se monta en un directorio, por eso el segundo campo es `none` y el tercero (tipo) es `swap`. La opción B tiene los campos invertidos, la C intentaría montarla como XFS y la D mezcla un comando con la sintaxis de fstab. Pruébalo con `swapon -a` y `swapon --show`."
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "tipo": "opcion",
+    "solucion": "",
+    "verificacion": "",
+    "id": "alm-13",
+    "dificultad": "media",
+    "titulo": "La partición nueva no aparece en /dev",
+    "enunciado": "Acabas de crear la partición 2 en **/dev/vdb** con fdisk, pero al ejecutar `mkfs.xfs /dev/vdb2` obtienes \"No such file or directory\" y `lsblk` no la muestra. ¿Qué haces a continuación?",
+    "pistas": [
+      "El problema es que el kernel todavía no ha releído la tabla de particiones."
+    ],
+    "opciones": [
+      "Ejecutar `systemctl daemon-reload` para que systemd detecte la partición",
+      "Ejecutar `partprobe /dev/vdb` (y `udevadm settle`) para que el kernel relea la tabla",
+      "Ejecutar `mount -a` para que se cree el dispositivo /dev/vdb2",
+      "Ejecutar `pvscan --cache` para refrescar la lista de dispositivos"
+    ],
+    "correcta": 1,
+    "explicacion": "`partprobe` pide al kernel que vuelva a leer la tabla de particiones y `udevadm settle` espera a que udev cree el archivo en /dev. `daemon-reload` solo recarga unidades de systemd, `mount -a` monta lo que hay en fstab y `pvscan` trabaja con LVM, no con particiones. Si el disco está en uso y partprobe no puede, reiniciar es la última opción."
+  }
+]

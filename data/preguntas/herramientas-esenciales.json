@@ -1,0 +1,234 @@
+[
+  {
+    "id": "herr-01",
+    "dominio": "herramientas-esenciales",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Buscar archivos de un usuario y copiarlos",
+    "enunciado": "Existe el usuario **mateo** en el sistema. Busca en todo el sistema de archivos los **archivos regulares** cuyo propietario sea `mateo` y cópialos al directorio **/root/encontrados**, conservando sus permisos y fechas.\n\n- Crea el directorio si no existe.\n- No copies directorios, solo archivos.",
+    "pistas": [
+      "El comando find permite filtrar por propietario y por tipo de archivo.",
+      "Revisa las opciones -user, -type f y -exec de find.",
+      "Envía los errores de \"Permiso denegado\" o de /proc a /dev/null para que la salida quede limpia."
+    ],
+    "solucion": "# Crear el directorio destino\nmkdir -p /root/encontrados\n\n# Buscar archivos regulares de mateo y copiarlos conservando atributos (-p)\nfind / -user mateo -type f -exec cp -p {} /root/encontrados/ \\; 2>/dev/null",
+    "verificacion": "# Debe listar los archivos copiados\nls -l /root/encontrados\n\n# Comparar la cantidad encontrada con la copiada (pueden diferir si hay nombres repetidos)\nfind / -user mateo -type f 2>/dev/null | wc -l\nls /root/encontrados | wc -l",
+    "explicacion": "find recorre el sistema y -exec ejecuta cp por cada archivo encontrado; {} se sustituye por el nombre y \\; cierra el comando. Un error típico es olvidar -type f, lo que intenta copiar directorios (como /home/mateo) y genera errores."
+  },
+  {
+    "id": "herr-02",
+    "dominio": "herramientas-esenciales",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Filtrar líneas con grep a un archivo",
+    "enunciado": "Guarda en **/root/lines.txt** todas las líneas del archivo **/usr/share/dict/words** que contengan la cadena **seismic**, manteniendo el orden original.\n\nEl archivo /root/lines.txt no debe contener líneas vacías ni ninguna otra línea extra.",
+    "pistas": [
+      "grep imprime las líneas que coinciden con un patrón.",
+      "Usa > para redirigir la salida estándar a un archivo.",
+      "Si /usr/share/dict/words no existe, lo proporciona el paquete words."
+    ],
+    "solucion": "# (Solo si falta el archivo) instalar el diccionario\n# dnf install -y words\n\n# Buscar las líneas y redirigir la salida al archivo\ngrep seismic /usr/share/dict/words > /root/lines.txt",
+    "verificacion": "# Ver el contenido\ncat /root/lines.txt\n\n# Ambas cuentas deben coincidir\ngrep -c seismic /usr/share/dict/words\nwc -l < /root/lines.txt\n\n# No debe mostrar nada (ninguna línea sin \"seismic\")\ngrep -v seismic /root/lines.txt",
+    "explicacion": "grep filtra y > crea o sobrescribe el archivo con el resultado. No uses >> si el archivo ya existe, porque añadirías líneas duplicadas."
+  },
+  {
+    "id": "herr-03",
+    "dominio": "herramientas-esenciales",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Crear un archivo tar comprimido con bzip2",
+    "enunciado": "Crea un archivo comprimido llamado **/root/backup.tar.bz2** que contenga el directorio **/usr/local** completo. Usa compresión **bzip2**.",
+    "pistas": [
+      "tar usa -c para crear, -f para indicar el archivo y una letra distinta para cada tipo de compresión.",
+      "Para bzip2 la opción es -j (gzip es -z y xz es -J).",
+      "Si tar se queja de que falta bzip2, instala el paquete bzip2."
+    ],
+    "solucion": "# Asegurar que bzip2 está instalado\ndnf install -y bzip2\n\n# c = crear, v = mostrar, j = bzip2, f = nombre del archivo\ntar -cvjf /root/backup.tar.bz2 /usr/local",
+    "verificacion": "# Debe indicar \"bzip2 compressed data\"\nfile /root/backup.tar.bz2\n\n# Listar el contenido sin extraer (las rutas empiezan por usr/local/)\ntar -tjf /root/backup.tar.bz2 | head",
+    "explicacion": "tar empaqueta y la opción -j pasa el paquete por bzip2. tar quita la \"/\" inicial de las rutas (verás el aviso \"Removing leading /\"), eso es normal y no es un error."
+  },
+  {
+    "id": "herr-04",
+    "dominio": "herramientas-esenciales",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Crear y extraer un archivo tar.xz",
+    "enunciado": "1. Crea el archivo **/root/etc-config.tar.xz** con el contenido del directorio **/etc/ssh**, usando compresión **xz**.\n2. Extrae ese archivo dentro del directorio **/tmp/restaurado** (créalo si no existe).\n\nAl final debe existir el archivo /tmp/restaurado/etc/ssh/sshd_config.",
+    "pistas": [
+      "La opción de tar para xz es -J (mayúscula).",
+      "Para extraer en otro directorio usa la opción -C."
+    ],
+    "solucion": "# Crear el archivo con compresión xz\ntar -cJf /root/etc-config.tar.xz /etc/ssh\n\n# Crear el destino y extraer allí\nmkdir -p /tmp/restaurado\ntar -xJf /root/etc-config.tar.xz -C /tmp/restaurado",
+    "verificacion": "# Debe indicar \"XZ compressed data\"\nfile /root/etc-config.tar.xz\n\n# Debe existir el archivo extraído\nls -l /tmp/restaurado/etc/ssh/sshd_config",
+    "explicacion": "Con -C tar cambia al directorio indicado antes de extraer. Error típico: confundir -j (bzip2) con -J (xz). Al extraer, tar moderno detecta la compresión solo, así que -xf también funcionaría."
+  },
+  {
+    "id": "herr-05",
+    "dominio": "herramientas-esenciales",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Enlaces duros y simbólicos",
+    "enunciado": "1. Crea el archivo **/opt/datos/informe.txt** con el texto **version 1**.\n2. Crea un **enlace duro** llamado **/opt/datos/informe-duro.txt** que apunte a informe.txt.\n3. Crea un **enlace simbólico** llamado **/root/informe-link** que apunte a **/opt/datos/informe.txt** (usa ruta absoluta).",
+    "pistas": [
+      "El comando para crear enlaces es ln; sin opciones crea enlaces duros.",
+      "Para un enlace simbólico añade -s. El primer argumento es el destino (el archivo real) y el segundo el nombre del enlace."
+    ],
+    "solucion": "# Crear el directorio y el archivo\nmkdir -p /opt/datos\necho \"version 1\" > /opt/datos/informe.txt\n\n# Enlace duro (mismo inodo)\nln /opt/datos/informe.txt /opt/datos/informe-duro.txt\n\n# Enlace simbólico con ruta absoluta\nln -s /opt/datos/informe.txt /root/informe-link",
+    "verificacion": "# Los dos primeros deben mostrar el MISMO número de inodo y contador de enlaces 2\nls -li /opt/datos/informe.txt /opt/datos/informe-duro.txt\n\n# Debe mostrar: /root/informe-link -> /opt/datos/informe.txt\nls -l /root/informe-link\n\n# Debe mostrar \"version 1\"\ncat /root/informe-link",
+    "explicacion": "Un enlace duro es otro nombre para el mismo inodo, por eso sobrevive si borras el original. Un enlace simbólico solo guarda una ruta y queda \"roto\" si el original desaparece. Los enlaces duros no pueden cruzar sistemas de archivos ni apuntar a directorios."
+  },
+  {
+    "id": "herr-06",
+    "dominio": "herramientas-esenciales",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Permisos con chmod y chown",
+    "enunciado": "Crea el directorio **/srv/proyecto** y dentro el archivo **/srv/proyecto/plan.txt**. Luego:\n\n1. El propietario de ambos debe ser el usuario **ana** y el grupo **desarrollo** (el usuario y el grupo ya existen).\n2. El directorio debe tener permisos **rwxrwx---** (770).\n3. El archivo debe tener permisos **rw-r-----** (640).\n4. Después, usando notación **simbólica**, añade permiso de lectura para \"otros\" solo al archivo.",
+    "pistas": [
+      "chown acepta usuario:grupo en un solo comando.",
+      "En octal: r=4, w=2, x=1. Suma por cada grupo (usuario, grupo, otros).",
+      "La notación simbólica es del tipo u+x, g-w, o+r."
+    ],
+    "solucion": "# Crear directorio y archivo\nmkdir -p /srv/proyecto\ntouch /srv/proyecto/plan.txt\n\n# Cambiar propietario y grupo (-R aplica también al archivo)\nchown -R ana:desarrollo /srv/proyecto\n\n# Permisos en octal\nchmod 770 /srv/proyecto\nchmod 640 /srv/proyecto/plan.txt\n\n# Añadir lectura para otros con notación simbólica\nchmod o+r /srv/proyecto/plan.txt",
+    "verificacion": "# Debe mostrar drwxrwx--- ana desarrollo\nls -ld /srv/proyecto\n\n# Debe mostrar -rw-r--r-- ana desarrollo\nls -l /srv/proyecto/plan.txt\n\n# Alternativa numérica: debe mostrar 770 y 644\nstat -c '%a %U %G %n' /srv/proyecto /srv/proyecto/plan.txt",
+    "explicacion": "Tras chmod o+r el archivo queda en 644 (rw-r--r--). Error típico: aplicar chmod -R 640 al directorio, lo que le quita el permiso x y nadie puede entrar en él."
+  },
+  {
+    "id": "herr-07",
+    "dominio": "herramientas-esenciales",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Acceso SSH con clave pública",
+    "enunciado": "En **serverb.lab.example.com** existe el usuario **operador** (contraseña: **redhat**). Como el usuario **operador** de tu máquina local:\n\n1. Genera un par de claves SSH de tipo **ed25519** sin frase de paso.\n2. Copia la clave pública a **operador@serverb.lab.example.com**.\n3. Comprueba que puedes ejecutar **hostname** en serverb por SSH sin que te pida contraseña.",
+    "pistas": [
+      "ssh-keygen crea el par de claves; con -t eliges el tipo y con -N \"\" dejas la frase vacía.",
+      "ssh-copy-id añade tu clave pública al archivo ~/.ssh/authorized_keys del equipo remoto."
+    ],
+    "solucion": "# Cambiar al usuario operador local\nsu - operador\n\n# Generar la clave sin frase de paso en la ruta por defecto\nssh-keygen -t ed25519 -N \"\" -f ~/.ssh/id_ed25519\n\n# Copiar la clave pública al servidor (pedirá la contraseña una sola vez)\nssh-copy-id operador@serverb.lab.example.com",
+    "verificacion": "# Como operador: no debe pedir contraseña y debe mostrar serverb.lab.example.com\nssh -o BatchMode=yes operador@serverb.lab.example.com hostname\n\n# En serverb, la clave debe estar en authorized_keys con permisos 600\nssh operador@serverb.lab.example.com 'ls -l ~/.ssh/authorized_keys'",
+    "explicacion": "ssh-copy-id copia la clave y ajusta permisos correctamente. BatchMode=yes hace que ssh falle en lugar de pedir contraseña, así compruebas que la clave funciona. Si copias la clave a mano, ~/.ssh debe tener 700 y authorized_keys 600 o sshd la ignorará."
+  },
+  {
+    "id": "herr-08",
+    "dominio": "herramientas-esenciales",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Redirección de salida y errores",
+    "enunciado": "Ejecuta como el usuario **luis** (no como root) el comando:\n\n```\nfind /etc -name \"*.conf\"\n```\n\n- Guarda la lista de archivos encontrados (salida estándar) en **/home/luis/confs.txt**.\n- Guarda los mensajes de error en **/home/luis/errores.txt**.\n- Después, **añade** al final de /home/luis/confs.txt una línea con el texto **FIN**, sin borrar lo que ya contenía.",
+    "pistas": [
+      "La salida estándar es el descriptor 1 (>) y la salida de error el descriptor 2 (2>).",
+      ">> añade al final del archivo en lugar de sobrescribirlo."
+    ],
+    "solucion": "# Cambiar a luis con su entorno completo\nsu - luis\n\n# Separar salida estándar y errores en archivos distintos\nfind /etc -name \"*.conf\" > /home/luis/confs.txt 2> /home/luis/errores.txt\n\n# Añadir la línea FIN al final\necho \"FIN\" >> /home/luis/confs.txt",
+    "verificacion": "# Debe mostrar rutas .conf y la última línea debe ser FIN\nhead -3 /home/luis/confs.txt\ntail -1 /home/luis/confs.txt\n\n# Debe contener mensajes \"Permission denied\"\nhead -3 /home/luis/errores.txt",
+    "explicacion": "Como luis no tiene permiso para leer algunos directorios de /etc, find genera errores que 2> separa de la salida normal. Si quisieras ambas cosas en el mismo archivo usarías &> archivo. Error típico: usar > para añadir FIN, lo que borra la lista."
+  },
+  {
+    "id": "herr-09",
+    "dominio": "herramientas-esenciales",
+    "tipo": "tarea",
+    "dificultad": "dificil",
+    "titulo": "Expresiones regulares con grep",
+    "enunciado": "Del archivo **/etc/passwd**, obtén las líneas de los usuarios cuya **shell de inicio sea /bin/bash** y guárdalas en **/root/usuarios-bash.txt**.\n\nAdemás, del archivo **/etc/ssh/sshd_config**, guarda en **/root/sshd-activo.txt** solo las líneas que **no** sean comentarios (no empiezan por #) y que **no** estén vacías.",
+    "pistas": [
+      "En una expresión regular, ^ marca el inicio de la línea y $ el final.",
+      "grep -v invierte la coincidencia; grep -E permite usar | para \"o\".",
+      "Una línea vacía se representa con ^$."
+    ],
+    "solucion": "# Líneas que terminan exactamente en /bin/bash\ngrep '/bin/bash$' /etc/passwd > /root/usuarios-bash.txt\n\n# Quitar comentarios (^#) y líneas vacías (^$) en un solo paso\ngrep -v -E '^#|^$' /etc/ssh/sshd_config > /root/sshd-activo.txt",
+    "verificacion": "# Todas las líneas deben terminar en /bin/bash\ncat /root/usuarios-bash.txt\n\n# No debe mostrar nada (ninguna línea comentada o vacía)\ngrep -E '^#|^$' /root/sshd-activo.txt\ncat /root/sshd-activo.txt",
+    "explicacion": "El ancla $ evita coincidir con shells como /bin/bash2 o rutas que contengan bash en medio. -E activa las expresiones regulares extendidas, donde | significa \"o\". Sin -E tendrías que escribir \\| ."
+  },
+  {
+    "id": "herr-10",
+    "dominio": "herramientas-esenciales",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Crear, copiar, mover y borrar",
+    "enunciado": "Realiza estas operaciones como root:\n\n1. Crea la estructura de directorios **/practica/a/b/c** con un solo comando.\n2. Crea el archivo vacío **/practica/a/notas.txt**.\n3. Copia el directorio **/practica/a** completo a **/practica/copia-a**.\n4. Mueve (renombra) **/practica/a/notas.txt** a **/practica/a/b/apuntes.txt**.\n5. Borra el directorio **/practica/copia-a/b** con todo su contenido.",
+    "pistas": [
+      "mkdir -p crea los directorios padre que falten.",
+      "cp necesita -r para copiar directorios; mv sirve para mover y renombrar.",
+      "rmdir solo borra directorios vacíos; para borrar con contenido usa rm -r."
+    ],
+    "solucion": "# 1. Estructura completa\nmkdir -p /practica/a/b/c\n\n# 2. Archivo vacío\ntouch /practica/a/notas.txt\n\n# 3. Copia recursiva\ncp -r /practica/a /practica/copia-a\n\n# 4. Mover y renombrar a la vez\nmv /practica/a/notas.txt /practica/a/b/apuntes.txt\n\n# 5. Borrar el subdirectorio con su contenido\nrm -rf /practica/copia-a/b",
+    "verificacion": "# Debe existir apuntes.txt y NO notas.txt en /practica/a\nls -R /practica/a\n\n# copia-a debe tener notas.txt pero no el directorio b\nls -R /practica/copia-a",
+    "explicacion": "La copia se hizo antes de mover el archivo, por eso /practica/copia-a conserva notas.txt. Ten cuidado con rm -rf: no pide confirmación y no hay papelera."
+  },
+  {
+    "id": "herr-11",
+    "dominio": "herramientas-esenciales",
+    "tipo": "opcion",
+    "dificultad": "facil",
+    "titulo": "Diferencia entre su y su -",
+    "enunciado": "Estás conectado como **alumno** y necesitas trabajar como **root** con el entorno completo de root (su PATH, su directorio personal y sus variables). ¿Qué comando usas?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "su - (o su -l) inicia un shell de login y carga el entorno del usuario destino. su sin guion cambia de usuario pero conserva el entorno y el directorio actual de alumno. sudo -s abre un shell pero no de login, y exit simplemente cierra la sesión actual.",
+    "opciones": [
+      "su root",
+      "su -",
+      "sudo -s",
+      "exit root"
+    ],
+    "correcta": 1
+  },
+  {
+    "id": "herr-12",
+    "dominio": "herramientas-esenciales",
+    "tipo": "opcion",
+    "dificultad": "media",
+    "titulo": "Buscar documentación por palabra clave",
+    "enunciado": "No recuerdas qué comando sirve para cambiar la contraseña. Quieres buscar en las páginas de manual todas las entradas cuya descripción contenga la palabra **password**. ¿Qué comando usas?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "man -k (equivalente a apropos) busca una palabra clave en los nombres y descripciones cortas de las páginas de manual. Si no devuelve nada, ejecuta mandb como root para regenerar el índice. man password busca una página llamada exactamente \"password\", e info y /usr/share/doc no buscan por descripción.",
+    "opciones": [
+      "man password",
+      "info --search password",
+      "man -k password",
+      "ls /usr/share/doc | grep password"
+    ],
+    "correcta": 2
+  },
+  {
+    "id": "herr-13",
+    "dominio": "herramientas-esenciales",
+    "tipo": "opcion",
+    "dificultad": "media",
+    "titulo": "Permisos en notación octal",
+    "enunciado": "Ejecutas `chmod 754 script.sh`. ¿Qué permisos quedan?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "7 = 4+2+1 (rwx) para el propietario, 5 = 4+1 (r-x) para el grupo y 4 = r-- para otros. Por eso el resultado es rwxr-xr--.",
+    "opciones": [
+      "rwxr-xr--",
+      "rwxrw-r--",
+      "rw-r-xr--",
+      "rwxr--r-x"
+    ],
+    "correcta": 0
+  },
+  {
+    "id": "herr-14",
+    "dominio": "herramientas-esenciales",
+    "tipo": "opcion",
+    "dificultad": "dificil",
+    "titulo": "Redirigir salida y errores juntos",
+    "enunciado": "Quieres que tanto la salida estándar como los errores del comando `dnf check-update` se guarden en el archivo **/root/salida.log**, sobrescribiéndolo. ¿Qué opción **NO** lo consigue?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "Las redirecciones se procesan de izquierda a derecha. En \"2>&1 > archivo\", el error se copia primero a la salida actual (la terminal) y solo después la salida estándar se envía al archivo, por lo que los errores siguen saliendo en pantalla. &> y \"> archivo 2>&1\" sí envían ambas cosas al archivo.",
+    "opciones": [
+      "dnf check-update &> /root/salida.log",
+      "dnf check-update > /root/salida.log 2>&1",
+      "dnf check-update 2>&1 > /root/salida.log",
+      "dnf check-update >& /root/salida.log"
+    ],
+    "correcta": 2
+  }
+]

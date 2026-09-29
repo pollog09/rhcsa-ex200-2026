@@ -1,0 +1,134 @@
+[
+  {
+    "id": "scr-01",
+    "dominio": "scripts",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Script que exige un argumento",
+    "enunciado": "Crea el script `/usr/local/bin/buscar.sh` que cumpla lo siguiente:\n\n- Recibe **un argumento**: un texto a buscar.\n- Si se ejecuta **sin argumentos**, muestra el mensaje `Uso: buscar.sh <texto>` y termina con **código de salida 1**.\n- Si recibe el argumento, muestra la ruta de todos los archivos dentro de `/etc` cuyo **nombre** contenga ese texto y termina con código 0.\n- Cualquier usuario del sistema debe poder ejecutarlo.",
+    "pistas": [
+      "Usa `$#` para saber cuántos argumentos recibió el script.",
+      "`exit 1` termina el script con código de salida 1.",
+      "`find /etc -name \"*texto*\"` busca por nombre. Recuerda dar permiso de ejecución con `chmod`."
+    ],
+    "solucion": "# Crear el script\ncat > /usr/local/bin/buscar.sh <<'EOF'\n#!/bin/bash\n# Si no hay argumentos, mostrar el uso y salir con código 1\nif [ $# -lt 1 ]; then\n    echo \"Uso: buscar.sh <texto>\"\n    exit 1\nfi\n\n# Buscar archivos en /etc cuyo nombre contenga el texto\nfind /etc -name \"*$1*\" 2>/dev/null\nexit 0\nEOF\n\n# Dar permisos de ejecución para todos\nchmod 755 /usr/local/bin/buscar.sh",
+    "verificacion": "# Sin argumento: debe mostrar el uso y devolver 1\n/usr/local/bin/buscar.sh; echo \"Código: $?\"\n\n# Con argumento: debe listar archivos (por ejemplo, /etc/passwd)\n/usr/local/bin/buscar.sh passwd; echo \"Código: $?\"\n\n# Como usuario normal también debe funcionar\nsu - nobody -s /bin/bash -c '/usr/local/bin/buscar.sh hosts'\nls -l /usr/local/bin/buscar.sh",
+    "explicacion": "`$#` contiene el número de argumentos, así que `[ $# -lt 1 ]` detecta que falta el texto. Un error típico es olvidar el `chmod +x` o las comillas en `\"*$1*\"`: sin comillas, el shell podría expandir el asterisco antes de que lo vea `find`."
+  },
+  {
+    "id": "scr-02",
+    "dominio": "scripts",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Comprobar usuarios con un bucle for",
+    "enunciado": "Crea el script `/root/usuarios.sh` que:\n\n- Recibe **uno o varios nombres de usuario** como argumentos.\n- Para cada argumento, muestra `<nombre>: existe` si el usuario existe en el sistema, o `<nombre>: no existe` si no existe.\n- Si no recibe ningún argumento, muestra `Uso: usuarios.sh usuario...` y termina con código 1.\n\nEjemplo: `/root/usuarios.sh root pepito` debe mostrar `root: existe` y `pepito: no existe`.",
+    "pistas": [
+      "`\"$@\"` contiene todos los argumentos, cada uno por separado.",
+      "El comando `id usuario` devuelve código 0 si el usuario existe; puedes usarlo directamente en un `if`."
+    ],
+    "solucion": "cat > /root/usuarios.sh <<'EOF'\n#!/bin/bash\n# Comprobar que hay al menos un argumento\nif [ $# -eq 0 ]; then\n    echo \"Uso: usuarios.sh usuario...\"\n    exit 1\nfi\n\n# Recorrer todos los argumentos\nfor u in \"$@\"; do\n    # id devuelve 0 si el usuario existe; ocultamos su salida\n    if id \"$u\" &>/dev/null; then\n        echo \"$u: existe\"\n    else\n        echo \"$u: no existe\"\n    fi\ndone\nEOF\n\nchmod 700 /root/usuarios.sh",
+    "verificacion": "/root/usuarios.sh root pepito\n# Esperado:\n# root: existe\n# pepito: no existe\n\n/root/usuarios.sh; echo \"Código: $?\"   # Esperado: mensaje de uso y Código: 1",
+    "explicacion": "`if` evalúa el código de salida del comando: 0 es verdadero y cualquier otro valor es falso. Por eso `if id \"$u\"` funciona sin usar `[ ]`. Usa siempre `\"$@\"` entre comillas para que cada argumento se trate por separado."
+  },
+  {
+    "id": "scr-03",
+    "dominio": "scripts",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Crear directorios leyendo un archivo",
+    "enunciado": "El archivo `/root/proyectos.txt` contiene un nombre de proyecto por línea (puede tener líneas vacías). Por ejemplo:\n\n```\nalfa\nbeta\n\ngamma\n```\n\nCrea el script `/usr/local/bin/crear-proyectos.sh` que:\n\n- Lea `/root/proyectos.txt` **línea a línea** con un bucle `while`.\n- Ignore las líneas vacías.\n- Para cada nombre, cree el directorio `/srv/proyectos/<nombre>` (sin error si ya existe) y muestre `Creado: /srv/proyectos/<nombre>`.\n- Si el archivo `/root/proyectos.txt` no existe, muestre `No existe /root/proyectos.txt` y termine con código 2.",
+    "pistas": [
+      "La estructura típica es `while read -r linea; do ... done < archivo`.",
+      "`[ -z \"$linea\" ]` es verdadero cuando la línea está vacía; usa `continue` para saltarla.",
+      "`[ -f archivo ]` comprueba que un archivo regular existe. `mkdir -p` no falla si el directorio ya existe."
+    ],
+    "solucion": "cat > /usr/local/bin/crear-proyectos.sh <<'EOF'\n#!/bin/bash\nLISTA=/root/proyectos.txt\n\n# Comprobar que el archivo existe\nif [ ! -f \"$LISTA\" ]; then\n    echo \"No existe $LISTA\"\n    exit 2\nfi\n\n# Leer el archivo línea a línea\nwhile read -r nombre; do\n    # Saltar líneas vacías\n    [ -z \"$nombre\" ] && continue\n    mkdir -p \"/srv/proyectos/$nombre\"\n    echo \"Creado: /srv/proyectos/$nombre\"\ndone < \"$LISTA\"\nEOF\n\nchmod 755 /usr/local/bin/crear-proyectos.sh\n\n# Preparar el archivo de ejemplo y ejecutar\nprintf 'alfa\\nbeta\\n\\ngamma\\n' > /root/proyectos.txt\n/usr/local/bin/crear-proyectos.sh",
+    "verificacion": "/usr/local/bin/crear-proyectos.sh\nls -ld /srv/proyectos/*        # Deben aparecer alfa, beta y gamma (ningún directorio vacío raro)\n\n# Probar el caso de error\nmv /root/proyectos.txt /root/proyectos.bak\n/usr/local/bin/crear-proyectos.sh; echo \"Código: $?\"   # Esperado: Código: 2\nmv /root/proyectos.bak /root/proyectos.txt",
+    "explicacion": "`while read -r` lee una línea completa en cada vuelta y la redirección `< \"$LISTA\"` al final del `done` alimenta el bucle con el archivo. Un error típico es usar `for n in $(cat archivo)`, que parte por espacios y no por líneas."
+  },
+  {
+    "id": "scr-04",
+    "dominio": "scripts",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Alerta de espacio en disco con $(...)",
+    "enunciado": "Crea el script `/usr/local/bin/espacio.sh` que:\n\n- Obtenga el **porcentaje de uso** del sistema de archivos `/` usando la salida de `df` y lo guarde en una variable.\n- Acepte un **umbral opcional** como primer argumento. Si no se indica, el umbral es **80**.\n- Si el uso es **mayor o igual** que el umbral, muestre `ALERTA: / al <uso>%` y termine con código **2**.\n- Si no, muestre `OK: / al <uso>%` y termine con código **0**.",
+    "pistas": [
+      "`df --output=pcent /` muestra solo la columna del porcentaje (con cabecera).",
+      "Guarda la salida de un comando con `variable=$(comando)`. `tr -dc '0-9'` deja solo los dígitos.",
+      "`${1:-80}` vale `$1` si existe o 80 si no existe."
+    ],
+    "solucion": "cat > /usr/local/bin/espacio.sh <<'EOF'\n#!/bin/bash\n# Umbral: primer argumento o 80 por defecto\nUMBRAL=${1:-80}\n\n# Porcentaje de uso de / (solo números, sin cabecera ni '%')\nUSO=$(df --output=pcent / | tail -n 1 | tr -dc '0-9')\n\nif [ \"$USO\" -ge \"$UMBRAL\" ]; then\n    echo \"ALERTA: / al ${USO}%\"\n    exit 2\nelse\n    echo \"OK: / al ${USO}%\"\n    exit 0\nfi\nEOF\n\nchmod 755 /usr/local/bin/espacio.sh",
+    "verificacion": "/usr/local/bin/espacio.sh;    echo \"Código: $?\"   # Normalmente OK y Código: 0\n/usr/local/bin/espacio.sh 1;  echo \"Código: $?\"   # Umbral 1 %: ALERTA y Código: 2\n/usr/local/bin/espacio.sh 100; echo \"Código: $?\"  # OK y Código: 0\ndf -h /                                            # Compara el porcentaje",
+    "explicacion": "`$(...)` ejecuta el comando y sustituye su salida, así la variable `USO` queda con un número. `-ge` compara números enteros; si `USO` tuviera el símbolo `%` o la cabecera, la comparación fallaría con el error `integer expression expected`."
+  },
+  {
+    "id": "scr-05",
+    "dominio": "scripts",
+    "tipo": "tarea",
+    "dificultad": "dificil",
+    "titulo": "Listar archivos grandes con validaciones",
+    "enunciado": "Crea el script `/usr/local/bin/grandes.sh` que se use así:\n\n```\ngrandes.sh <directorio> <tamaño_en_KB>\n```\n\nRequisitos:\n\n- Si no recibe **exactamente 2 argumentos**, muestra `Uso: grandes.sh <directorio> <tamaño_en_KB>` y termina con código 1.\n- Si el primer argumento **no es un directorio**, muestra `Error: <arg> no es un directorio` y termina con código 2.\n- Recorre con un bucle `for` los elementos del directorio (sin entrar en subdirectorios) y, para cada **archivo regular** cuyo tamaño en KB sea **mayor** que el segundo argumento, muestra `<tamaño> KB <ruta>`.\n- Al final muestra `Total: <n> archivos` con el número de archivos encontrados.",
+    "pistas": [
+      "Usa `[ $# -ne 2 ]` para exigir exactamente dos argumentos y `[ -d \"$1\" ]` para comprobar el directorio.",
+      "`for f in \"$1\"/*` recorre el contenido del directorio; `[ -f \"$f\" ] || continue` salta lo que no sea archivo regular.",
+      "`du -k archivo | cut -f1` da el tamaño en KB. Para contar, usa una variable y `((n++))` o `n=$((n+1))`."
+    ],
+    "solucion": "cat > /usr/local/bin/grandes.sh <<'EOF'\n#!/bin/bash\n# 1. Validar número de argumentos\nif [ $# -ne 2 ]; then\n    echo \"Uso: grandes.sh <directorio> <tamaño_en_KB>\"\n    exit 1\nfi\n\nDIR=$1\nLIMITE=$2\n\n# 2. Validar que el primer argumento es un directorio\nif [ ! -d \"$DIR\" ]; then\n    echo \"Error: $DIR no es un directorio\"\n    exit 2\nfi\n\n# 3. Recorrer el contenido del directorio\nn=0\nfor f in \"$DIR\"/*; do\n    [ -f \"$f\" ] || continue              # solo archivos regulares\n    tam=$(du -k \"$f\" | cut -f1)          # tamaño en KB\n    if [ \"$tam\" -gt \"$LIMITE\" ]; then\n        echo \"$tam KB $f\"\n        n=$((n + 1))\n    fi\ndone\n\necho \"Total: $n archivos\"\nEOF\n\nchmod 755 /usr/local/bin/grandes.sh",
+    "verificacion": "/usr/local/bin/grandes.sh; echo \"Código: $?\"                  # Uso y Código: 1\n/usr/local/bin/grandes.sh /etc/passwd 10; echo \"Código: $?\"   # Error y Código: 2\n/usr/local/bin/grandes.sh /etc 20                             # Lista archivos de /etc de más de 20 KB y el total\n\n# Comparar con find (debería dar un resultado parecido)\nfind /etc -maxdepth 1 -type f -size +20k",
+    "explicacion": "Validar primero los argumentos y salir con códigos distintos permite a otros scripts saber qué falló. `-gt` y `-ne` comparan números; `>` dentro de `[ ]` no compara, sino que redirige la salida a un archivo."
+  },
+  {
+    "id": "scr-06",
+    "dominio": "scripts",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Usar $? para comprobar un servicio",
+    "enunciado": "Crea el script `/usr/local/bin/estado-servicio.sh` que:\n\n- Reciba el **nombre de un servicio** como primer argumento (si no lo recibe, muestra `Uso: estado-servicio.sh <servicio>` y sale con código 1).\n- Ejecute `systemctl is-active --quiet <servicio>` y guarde su **código de salida** en la variable `RC` usando `$?`.\n- Si `RC` es 0, muestre `<servicio> está activo`. Si no, muestre `<servicio> NO está activo (código RC)` sustituyendo RC por el valor real.\n- Termine devolviendo el **mismo código** que devolvió `systemctl`.",
+    "pistas": [
+      "`$?` guarda el código de salida del **último** comando ejecutado: léelo justo después de `systemctl`.",
+      "`exit $RC` devuelve el código guardado."
+    ],
+    "solucion": "cat > /usr/local/bin/estado-servicio.sh <<'EOF'\n#!/bin/bash\nif [ -z \"$1\" ]; then\n    echo \"Uso: estado-servicio.sh <servicio>\"\n    exit 1\nfi\n\n# Comprobar el servicio y guardar el código de salida inmediatamente\nsystemctl is-active --quiet \"$1\"\nRC=$?\n\nif [ $RC -eq 0 ]; then\n    echo \"$1 está activo\"\nelse\n    echo \"$1 NO está activo (código $RC)\"\nfi\n\nexit $RC\nEOF\n\nchmod 755 /usr/local/bin/estado-servicio.sh",
+    "verificacion": "/usr/local/bin/estado-servicio.sh sshd; echo \"Código: $?\"          # activo, Código: 0\n/usr/local/bin/estado-servicio.sh noexiste; echo \"Código: $?\"      # NO está activo, código distinto de 0\n/usr/local/bin/estado-servicio.sh; echo \"Código: $?\"               # Uso y Código: 1",
+    "explicacion": "`$?` cambia después de cada comando, incluso después de un `echo` o de un `[ ]`. Por eso hay que copiarlo a una variable justo después del comando que te interesa; si lo lees más tarde, obtendrás el código de otro comando."
+  },
+  {
+    "id": "scr-07",
+    "dominio": "scripts",
+    "tipo": "opcion",
+    "dificultad": "facil",
+    "titulo": "Contar argumentos con $#",
+    "enunciado": "Tienes el script `/root/args.sh` con este contenido:\n\n```bash\n#!/bin/bash\necho $#\n```\n\nLo ejecutas así:\n\n```\n/root/args.sh uno \"dos tres\" cuatro\n```\n\n¿Qué muestra por pantalla?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "`$#` es el número de argumentos. Las comillas agrupan `\"dos tres\"` en un único argumento, así que hay 3: `uno`, `dos tres` y `cuatro`. Mostrar todos los argumentos sería `$@`, no `$#`.",
+    "opciones": [
+      "3",
+      "4",
+      "1",
+      "uno dos tres cuatro"
+    ],
+    "correcta": 0
+  },
+  {
+    "id": "scr-08",
+    "dominio": "scripts",
+    "tipo": "opcion",
+    "dificultad": "media",
+    "titulo": "Condición correcta para comparar números",
+    "enunciado": "En un script bash quieres terminar con un mensaje de error si el script recibió **menos de 2 argumentos**. ¿Cuál de estas condiciones es la correcta?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "Dentro de `[ ]` los números se comparan con `-lt`, `-gt`, `-eq`, etc. `<` dentro de `[ ]` es una redirección: intenta leer de un archivo llamado `2`. `$@` son los argumentos (no su cantidad) y `$1` es solo el primero.",
+    "opciones": [
+      "if [ $# < 2 ]; then",
+      "if [ $@ -lt 2 ]; then",
+      "if [ $# -lt 2 ]; then",
+      "if [ $1 -lt 2 ]; then"
+    ],
+    "correcta": 2
+  }
+]

@@ -1,0 +1,118 @@
+[
+  {
+    "id": "soft-01",
+    "dominio": "software",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Configurar repositorios BaseOS y AppStream",
+    "enunciado": "Configura tu sistema para que use estos repositorios como fuente de paquetes por defecto:\n\n- **BaseOS**: http://repo.lab.example.com/rhel10/BaseOS\n- **AppStream**: http://repo.lab.example.com/rhel10/AppStream\n\nRequisitos:\n- Crea el archivo **/etc/yum.repos.d/lab.repo**.\n- Los ids de repositorio deben ser **lab-baseos** y **lab-appstream**.\n- Ambos deben estar **habilitados** y con la verificación GPG **desactivada**.",
+    "pistas": [
+      "Cada repositorio es una sección [id] dentro del archivo .repo.",
+      "Las claves mínimas son name, baseurl, enabled y gpgcheck.",
+      "Comprueba el resultado con dnf repolist y prueba a instalar un paquete."
+    ],
+    "solucion": "# Crear el archivo de repositorios\ncat > /etc/yum.repos.d/lab.repo << 'EOF'\n[lab-baseos]\nname=Lab RHEL 10 BaseOS\nbaseurl=http://repo.lab.example.com/rhel10/BaseOS\nenabled=1\ngpgcheck=0\n\n[lab-appstream]\nname=Lab RHEL 10 AppStream\nbaseurl=http://repo.lab.example.com/rhel10/AppStream\nenabled=1\ngpgcheck=0\nEOF\n\n# Limpiar la caché y cargar los metadatos nuevos\ndnf clean all\ndnf makecache",
+    "verificacion": "# Deben aparecer lab-baseos y lab-appstream como habilitados\ndnf repolist\n\n# Detalle de un repo (baseurl correcta, status enabled)\ndnf repoinfo lab-appstream\n\n# Debe poder instalar un paquete de AppStream sin errores\ndnf install -y httpd\n\n# El archivo persiste tras reiniciar\ncat /etc/yum.repos.d/lab.repo",
+    "explicacion": "dnf lee todos los archivos .repo de /etc/yum.repos.d. En /etc/dnf/dnf.conf de RHEL gpgcheck=1 está activado por defecto, así que si no pones gpgcheck=0 (o una gpgkey válida) la instalación falla por firma. Error típico: escribir mal la URL o dejar espacios en la línea baseurl."
+  },
+  {
+    "id": "soft-02",
+    "dominio": "software",
+    "tipo": "opcion",
+    "dificultad": "facil",
+    "titulo": "Añadir un repo con dnf config-manager",
+    "enunciado": "Quieres añadir el repositorio **http://repo.lab.example.com/extras** sin escribir a mano el archivo .repo, dejando que la herramienta genere el archivo en /etc/yum.repos.d/. ¿Qué comando usas en RHEL 10?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "dnf config-manager --add-repo (del paquete dnf-plugins-core) crea un archivo .repo con name, baseurl y enabled=1 a partir de la URL. Ojo: no añade gpgcheck, y como en RHEL gpgcheck=1 es el valor global, tendrás que añadir gpgcheck=0 al archivo generado o importar la clave con rpm --import. dnf install con una URL de repositorio intenta instalar un paquete, no añadir un repo.",
+    "opciones": [
+      "dnf repo add http://repo.lab.example.com/extras",
+      "dnf install http://repo.lab.example.com/extras",
+      "dnf config-manager --add-repo http://repo.lab.example.com/extras",
+      "dnf config-manager --enable http://repo.lab.example.com/extras"
+    ],
+    "correcta": 2
+  },
+  {
+    "id": "soft-03",
+    "dominio": "software",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Instalar y quitar paquetes RPM",
+    "enunciado": "1. Instala los paquetes **tmux** y **tree**.\n2. Elimina el paquete **tree**, dejando **tmux** instalado.\n3. Guarda en **/root/tmux-archivos.txt** la lista de archivos que instaló el paquete tmux.",
+    "pistas": [
+      "dnf install y dnf remove aceptan varios paquetes a la vez.",
+      "rpm -ql lista los archivos de un paquete instalado."
+    ],
+    "solucion": "# Instalar ambos paquetes\ndnf install -y tmux tree\n\n# Quitar solo tree\ndnf remove -y tree\n\n# Listar los archivos de tmux y guardarlos\nrpm -ql tmux > /root/tmux-archivos.txt",
+    "verificacion": "# tmux debe estar instalado y tree no\nrpm -q tmux\nrpm -q tree        # debe decir \"package tree is not installed\"\n\n# El archivo debe contener rutas como /usr/bin/tmux\ngrep /usr/bin/tmux /root/tmux-archivos.txt",
+    "explicacion": "dnf resuelve dependencias automáticamente al instalar y al eliminar. rpm -q consulta la base de datos local de paquetes; -l lista archivos y -i muestra información como versión y descripción."
+  },
+  {
+    "id": "soft-04",
+    "dominio": "software",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Encontrar qué paquete da un archivo",
+    "enunciado": "1. Averigua qué paquete **instalado** proporciona el archivo **/etc/ssh/sshd_config** y guarda solo el nombre completo del paquete en **/root/paquete-sshd.txt**.\n2. Averigua qué paquete (instalado o no) proporciona el comando **semanage** e instálalo.",
+    "pistas": [
+      "rpm -qf consulta a qué paquete instalado pertenece un archivo.",
+      "Para archivos que aún no tienes, usa dnf provides (acepta rutas con comodines como */semanage)."
+    ],
+    "solucion": "# Paquete instalado dueño del archivo\nrpm -qf /etc/ssh/sshd_config > /root/paquete-sshd.txt\n\n# Buscar en los repositorios qué paquete contiene semanage\ndnf provides '*/semanage'\n\n# Instalar el paquete indicado (en RHEL 10 es policycoreutils-python-utils)\ndnf install -y policycoreutils-python-utils",
+    "verificacion": "# Debe mostrar algo como openssh-server-9.x-...el10.x86_64\ncat /root/paquete-sshd.txt\n\n# El comando debe existir y pertenecer al paquete instalado\nwhich semanage\nrpm -qf \"$(which semanage)\"",
+    "explicacion": "rpm -qf solo funciona con archivos que ya existen en el sistema. dnf provides busca en los metadatos de los repositorios, así que sirve para comandos que todavía no tienes instalados."
+  },
+  {
+    "id": "soft-05",
+    "dominio": "software",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Añadir un remoto Flatpak",
+    "enunciado": "Configura a nivel de sistema un remoto Flatpak llamado **lab-flatpak** usando el archivo de descripción:\n\n**http://repo.lab.example.com/flatpak/lab.flatpakrepo**\n\nDespués guarda en **/root/apps-flatpak.txt** la lista de **aplicaciones** (no runtimes) disponibles en ese remoto.",
+    "pistas": [
+      "Si flatpak no está instalado, instálalo con dnf.",
+      "flatpak remote-add recibe el nombre del remoto y la URL del archivo .flatpakrepo.",
+      "flatpak remote-ls tiene la opción --app para mostrar solo aplicaciones."
+    ],
+    "solucion": "# Instalar flatpak si falta\ndnf install -y flatpak\n\n# Añadir el remoto a nivel de sistema (por defecto como root)\nflatpak remote-add --if-not-exists lab-flatpak http://repo.lab.example.com/flatpak/lab.flatpakrepo\n\n# Listar solo las aplicaciones del remoto\nflatpak remote-ls --app lab-flatpak > /root/apps-flatpak.txt",
+    "verificacion": "# El remoto debe aparecer con la opción \"system\"\nflatpak remotes --show-details\n\n# El archivo debe contener aplicaciones\ncat /root/apps-flatpak.txt\n\n# Persiste: la configuración vive en /var/lib/flatpak/repo/config\ngrep lab-flatpak /var/lib/flatpak/repo/config",
+    "explicacion": "El archivo .flatpakrepo trae la URL del repositorio y su clave GPG, por eso no hay que importar nada más. Como root el remoto se añade para todo el sistema; con --user se añadiría solo para el usuario actual."
+  },
+  {
+    "id": "soft-06",
+    "dominio": "software",
+    "tipo": "tarea",
+    "dificultad": "dificil",
+    "titulo": "Instalar, ejecutar y quitar un Flatpak",
+    "enunciado": "El remoto Flatpak **lab-flatpak** ya está configurado a nivel de sistema.\n\n1. Instala a nivel de sistema la aplicación **org.gnome.Calculator** desde ese remoto.\n2. Comprueba que aparece en la lista de aplicaciones instaladas y que se puede lanzar.\n3. Instala también **org.gnome.TextEditor** y después desinstálalo, eliminando además los runtimes que queden sin usar.",
+    "pistas": [
+      "flatpak install admite el remoto y el id de la aplicación; -y responde que sí.",
+      "flatpak list --app muestra solo aplicaciones instaladas.",
+      "flatpak uninstall --unused borra runtimes que ya no usa ninguna aplicación."
+    ],
+    "solucion": "# Instalar la calculadora desde el remoto\nflatpak install -y lab-flatpak org.gnome.Calculator\n\n# Ver aplicaciones instaladas y lanzarla (requiere sesión gráfica)\nflatpak list --app\nflatpak run org.gnome.Calculator &\n\n# Instalar y luego quitar el editor de texto\nflatpak install -y lab-flatpak org.gnome.TextEditor\nflatpak uninstall -y org.gnome.TextEditor\n\n# Eliminar runtimes huérfanos\nflatpak uninstall -y --unused",
+    "verificacion": "# Debe aparecer Calculator y NO TextEditor\nflatpak list --app\n\n# Información de la app instalada (origen lab-flatpak, instalación system)\nflatpak info org.gnome.Calculator\n\n# Tras reiniciar, la app sigue instalada\nflatpak list --app | grep org.gnome.Calculator",
+    "explicacion": "Las aplicaciones Flatpak se identifican por un id tipo DNS inverso y dependen de un runtime compartido. Al desinstalar una app el runtime no se borra solo; para eso existe --unused. flatpak run necesita una sesión gráfica; en una consola de texto fallará aunque la app esté bien instalada."
+  },
+  {
+    "id": "soft-07",
+    "dominio": "software",
+    "tipo": "opcion",
+    "dificultad": "media",
+    "titulo": "Clave que activa la firma GPG",
+    "enunciado": "En un archivo de /etc/yum.repos.d/ quieres que dnf **no** compruebe las firmas GPG de los paquetes de ese repositorio. ¿Qué línea debes añadir en la sección del repositorio?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "La clave correcta es gpgcheck y 0 la desactiva. enabled=0 desactiva el repositorio completo, gpgkey solo indica dónde está la clave pública y \"gpg=no\" no es una opción válida de dnf.",
+    "opciones": [
+      "enabled=0",
+      "gpgcheck=0",
+      "gpgkey=none",
+      "gpg=no"
+    ],
+    "correcta": 1
+  }
+]

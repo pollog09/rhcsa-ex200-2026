@@ -1,0 +1,170 @@
+[
+  {
+    "id": "usr-01",
+    "dominio": "usuarios-grupos",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Grupo sysadms y tres usuarios",
+    "enunciado": "Crea lo siguiente:\n\n- Un grupo llamado `sysadms`.\n- El usuario `natasha`, que pertenece a `sysadms` como **grupo secundario**.\n- El usuario `harry`, que también pertenece a `sysadms` como **grupo secundario**.\n- El usuario `sarah`, **sin shell interactiva** y que **no** pertenece a `sysadms`.\n- La contraseña de los tres usuarios debe ser `Estudio.2026`.",
+    "pistas": [
+      "`useradd -G grupo usuario` añade el usuario a un grupo secundario al crearlo.",
+      "Una shell no interactiva es `/sbin/nologin`; se indica con `-s`.",
+      "`echo 'clave' | passwd --stdin usuario` pone la contraseña sin preguntar."
+    ],
+    "solucion": "# Crear el grupo\ngroupadd sysadms\n\n# Crear los usuarios\nuseradd -G sysadms natasha\nuseradd -G sysadms harry\nuseradd -s /sbin/nologin sarah\n\n# Poner la contraseña a los tres\nfor u in natasha harry sarah; do\n    echo 'Estudio.2026' | passwd --stdin \"$u\"\ndone\n# Alternativa equivalente: echo 'natasha:Estudio.2026' | chpasswd",
+    "verificacion": "id natasha          # groups=...,sysadms\nid harry            # groups=...,sysadms\nid sarah            # sysadms NO debe aparecer\ngetent group sysadms                       # sysadms:x:GID:natasha,harry\ngrep '^sarah:' /etc/passwd | cut -d: -f7   # /sbin/nologin\npasswd -S natasha                          # Indica que la contraseña está establecida\n# Probar la contraseña desde un usuario normal (su pedirá la clave):\nsu - harry -c 'su - natasha -c whoami'",
+    "explicacion": "`-G` define grupos **secundarios**; `-g` cambiaría el grupo **principal**, que no es lo que se pide. `sarah` tendrá una contraseña, pero con `/sbin/nologin` no puede abrir una shell interactiva."
+  },
+  {
+    "id": "usr-02",
+    "dominio": "usuarios-grupos",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Usuario con UID concreto y contraseña",
+    "enunciado": "Crea el usuario `lucia` con **UID 2601**, el comentario (GECOS) `Lucia Gomez` y la contraseña `Lucia#2026`.",
+    "pistas": [
+      "`useradd -u` fija el UID y `-c` el comentario.",
+      "Pon la contraseña con `passwd --stdin` o con `chpasswd`. Usa comillas simples porque la clave contiene `#`."
+    ],
+    "solucion": "# Crear el usuario con UID y comentario\nuseradd -u 2601 -c \"Lucia Gomez\" lucia\n\n# Poner la contraseña (comillas simples para que el shell no interprete nada)\necho 'Lucia#2026' | passwd --stdin lucia",
+    "verificacion": "id lucia                          # uid=2601(lucia) gid=2601(lucia) ...\ngetent passwd lucia               # lucia:x:2601:2601:Lucia Gomez:/home/lucia:/bin/bash\npasswd -S lucia                   # Contraseña establecida\nls -ld /home/lucia                # El directorio personal existe\n# Desde otro usuario normal (no root), 'su - lucia' debe pedir y aceptar Lucia#2026",
+    "explicacion": "Si no indicas `-u`, `useradd` asigna el siguiente UID libre a partir de 1000. Sin comillas simples, el `#` empezaría un comentario en el shell y la contraseña quedaría cortada como `Lucia`."
+  },
+  {
+    "id": "usr-03",
+    "dominio": "usuarios-grupos",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Caducidad de contraseña con chage",
+    "enunciado": "Crea el usuario `pedro` con la contraseña `Pedro.2026` y configura su cuenta así:\n\n- La contraseña debe cambiarse como máximo cada **60 días**.\n- El sistema debe avisarle **7 días** antes de que caduque.\n- La **cuenta** caduca el **31 de diciembre de 2026**.\n- Debe cambiar la contraseña en su **primer inicio de sesión**.",
+    "pistas": [
+      "`chage -M` fija los días máximos y `-W` los días de aviso.",
+      "`chage -E AAAA-MM-DD` fija la caducidad de la cuenta.",
+      "`chage -d 0` marca la contraseña como caducada para forzar el cambio."
+    ],
+    "solucion": "useradd pedro\necho 'Pedro.2026' | passwd --stdin pedro\n\n# Máximo 60 días, aviso 7 días, cuenta caduca el 2026-12-31\nchage -M 60 -W 7 -E 2026-12-31 pedro\n\n# Forzar el cambio de contraseña en el próximo inicio de sesión\n# (hazlo al final: si después ejecutas 'passwd', se anula)\nchage -d 0 pedro",
+    "verificacion": "chage -l pedro\n# Esperado:\n#   Last password change            : password must be changed\n#   Account expires                 : Dec 31, 2026\n#   Maximum number of days between password change : 60\n#   Number of days of warning before password expires : 7\ngrep '^pedro:' /etc/shadow | cut -d: -f3,5,6,8   # 0:60:7:<días desde 1970 hasta 2026-12-31>",
+    "explicacion": "`chage` guarda estos datos en `/etc/shadow`, así que son persistentes. No confundas `-M` (caducidad de la **contraseña**) con `-E` (caducidad de la **cuenta**). Si pones la contraseña con `passwd` después de `chage -d 0`, se actualiza la fecha de cambio y se pierde el cambio obligatorio."
+  },
+  {
+    "id": "usr-04",
+    "dominio": "usuarios-grupos",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Caducidad por defecto en login.defs",
+    "enunciado": "La política de la empresa exige que las contraseñas de **todos los usuarios nuevos** caduquen cada **90 días** y que se avise **10 días** antes. Configura el sistema para que se aplique automáticamente a los usuarios que se creen a partir de ahora. Después crea el usuario `tomas` y comprueba que tiene esos valores.",
+    "pistas": [
+      "Los valores por defecto para cuentas nuevas están en `/etc/login.defs`.",
+      "Las variables son `PASS_MAX_DAYS` y `PASS_WARN_AGE`.",
+      "Estos valores **no** afectan a los usuarios que ya existen; para ellos se usa `chage`."
+    ],
+    "solucion": "# Editar /etc/login.defs (con vim o con sed)\nsed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS\\t90/' /etc/login.defs\nsed -i 's/^PASS_WARN_AGE.*/PASS_WARN_AGE\\t10/' /etc/login.defs\n\n# Si alguna línea no existía o estaba comentada, añádela a mano:\n#   PASS_MAX_DAYS   90\n#   PASS_WARN_AGE   10\n\n# Crear un usuario nuevo para comprobarlo\nuseradd tomas",
+    "verificacion": "grep -E '^PASS_(MAX_DAYS|WARN_AGE)' /etc/login.defs   # 90 y 10\nchage -l tomas | grep -Ei 'maximum|warning'           # 90 y 10\nchage -l root | grep -i maximum                        # Usuarios antiguos: sin cambios",
+    "explicacion": "`useradd` lee `/etc/login.defs` al crear la cuenta y copia esos valores a `/etc/shadow`. Por eso el cambio solo afecta a cuentas nuevas: un error típico es esperar que también cambie a los usuarios ya creados."
+  },
+  {
+    "id": "usr-05",
+    "dominio": "usuarios-grupos",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "sudo sin contraseña para un grupo",
+    "enunciado": "Crea el grupo `soporte` y los usuarios `ana` y `luis` como miembros secundarios de ese grupo. Configura `sudo` para que **todos los miembros del grupo `soporte`** puedan ejecutar **cualquier comando como root sin introducir contraseña**. Hazlo en un archivo nuevo dentro de `/etc/sudoers.d/`, no en `/etc/sudoers`.",
+    "pistas": [
+      "En sudoers, un grupo se escribe con `%` delante: `%soporte`.",
+      "La etiqueta `NOPASSWD:` evita que se pida la contraseña.",
+      "Edita con `visudo -f /etc/sudoers.d/soporte` para que se compruebe la sintaxis al guardar."
+    ],
+    "solucion": "groupadd soporte\nuseradd -G soporte ana\nuseradd -G soporte luis\n\n# Crear la regla con visudo (comprueba la sintaxis al guardar)\nvisudo -f /etc/sudoers.d/soporte\n# Contenido del archivo:\n#   %soporte  ALL=(ALL)  NOPASSWD: ALL\n\n# Alternativa sin editor:\n# echo '%soporte ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/soporte\n# chmod 440 /etc/sudoers.d/soporte\n# visudo -cf /etc/sudoers.d/soporte",
+    "verificacion": "visudo -c                              # Todos los archivos: parsed OK\ncat /etc/sudoers.d/soporte\nsudo -l -U ana                         # (ALL) NOPASSWD: ALL\nsu - luis -c 'sudo -n whoami'          # root, sin pedir contraseña",
+    "explicacion": "Los archivos de `/etc/sudoers.d/` se incluyen automáticamente desde `/etc/sudoers`. Un error de sintaxis en sudoers puede dejar `sudo` inutilizable; por eso se usa `visudo`, que valida antes de guardar. `sudo -n` falla en vez de preguntar si hiciera falta contraseña."
+  },
+  {
+    "id": "usr-06",
+    "dominio": "usuarios-grupos",
+    "tipo": "tarea",
+    "dificultad": "dificil",
+    "titulo": "sudo limitado y grupo wheel",
+    "enunciado": "Configura el acceso privilegiado así:\n\n1. Crea el usuario `beatriz` y dale **acceso completo** con `sudo` (pidiendo su contraseña) añadiéndola al grupo administrativo estándar de RHEL. No modifiques ningún archivo de sudoers para ella.\n2. Crea el usuario `operador`. Con un archivo `/etc/sudoers.d/operador`, permite que **solo** pueda ejecutar como root estos dos comandos: `/usr/bin/systemctl restart sshd` y `/usr/bin/journalctl`. Nada más.",
+    "pistas": [
+      "En RHEL, `/etc/sudoers` ya contiene la línea `%wheel ALL=(ALL) ALL`.",
+      "`usermod -aG wheel usuario` añade un grupo secundario sin quitar los demás.",
+      "En una regla de sudoers puedes poner varios comandos separados por comas, con su ruta completa."
+    ],
+    "solucion": "# 1. beatriz con acceso completo mediante el grupo wheel\nuseradd beatriz\nusermod -aG wheel beatriz\ngrep '^%wheel' /etc/sudoers     # Comprueba que la regla está activa (sin #)\n\n# 2. operador con comandos limitados\nuseradd operador\nvisudo -f /etc/sudoers.d/operador\n# Contenido del archivo:\n#   operador  ALL=(root)  /usr/bin/systemctl restart sshd, /usr/bin/journalctl",
+    "verificacion": "visudo -c                                  # parsed OK\nid beatriz                                 # groups=...,10(wheel)\nsudo -l -U beatriz                         # (ALL) ALL\nsudo -l -U operador                        # Solo los dos comandos\n# Como root, 'sudo -l -U usuario comando' comprueba si ese comando concreto está permitido:\nsudo -l -U operador /usr/bin/systemctl restart sshd && echo \"permitido\"\nsudo -l -U operador /usr/bin/systemctl stop sshd    || echo \"denegado (correcto)\"",
+    "explicacion": "El grupo `wheel` ya tiene todos los permisos en el `/etc/sudoers` de RHEL, así que basta con añadir al usuario. Al indicar argumentos (`restart sshd`), sudo solo permite exactamente esa combinación; poner solo `/usr/bin/systemctl` le permitiría hacer cualquier cosa con systemctl."
+  },
+  {
+    "id": "usr-07",
+    "dominio": "usuarios-grupos",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Grupo con GID y gpasswd",
+    "enunciado": "1. Crea el grupo `desarrollo` con **GID 3000**.\n2. Crea los usuarios `irene`, `jorge` y `kevin` (sin grupos secundarios).\n3. Usando `gpasswd`, añade a `irene`, `jorge` y `kevin` al grupo `desarrollo`.\n4. Quita a `kevin` del grupo con `gpasswd`.\n5. Haz que `irene` sea **administradora** del grupo `desarrollo` (para que pueda añadir y quitar miembros).",
+    "pistas": [
+      "`groupadd -g GID nombre` crea un grupo con un GID concreto.",
+      "`gpasswd -a usuario grupo` añade y `gpasswd -d usuario grupo` quita.",
+      "`gpasswd -A usuario grupo` define los administradores del grupo."
+    ],
+    "solucion": "# 1. Grupo con GID 3000\ngroupadd -g 3000 desarrollo\n\n# 2. Usuarios\nuseradd irene\nuseradd jorge\nuseradd kevin\n\n# 3. Añadir miembros\ngpasswd -a irene desarrollo\ngpasswd -a jorge desarrollo\ngpasswd -a kevin desarrollo\n# (también: gpasswd -M irene,jorge,kevin desarrollo  -> fija la lista completa)\n\n# 4. Quitar a kevin\ngpasswd -d kevin desarrollo\n\n# 5. irene como administradora\ngpasswd -A irene desarrollo",
+    "verificacion": "getent group desarrollo          # desarrollo:x:3000:irene,jorge\nid kevin                         # desarrollo NO debe aparecer\ngrep '^desarrollo:' /etc/gshadow # desarrollo:!:irene:irene,jorge  (el 3er campo son los admins)",
+    "explicacion": "Los miembros secundarios están en `/etc/group` y los administradores del grupo en `/etc/gshadow`. Ojo: `gpasswd -M` **sustituye** toda la lista de miembros, mientras que `-a` solo añade uno."
+  },
+  {
+    "id": "usr-08",
+    "dominio": "usuarios-grupos",
+    "tipo": "opcion",
+    "dificultad": "media",
+    "titulo": "Añadir un grupo sin perder los demás",
+    "enunciado": "El usuario `natasha` ya pertenece a los grupos secundarios `sysadms` y `soporte`. Quieres añadirla también al grupo `wheel` **sin que pierda** los grupos que ya tiene. ¿Qué comando usas?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "`-aG` (append) añade el grupo a la lista actual. `usermod -G wheel` **sustituye** la lista y natasha perdería `sysadms` y `soporte`. `-g` cambia el grupo principal y `useradd` falla porque el usuario ya existe.",
+    "opciones": [
+      "usermod -G wheel natasha",
+      "usermod -aG wheel natasha",
+      "usermod -g wheel natasha",
+      "useradd -G wheel natasha"
+    ],
+    "correcta": 1
+  },
+  {
+    "id": "usr-09",
+    "dominio": "usuarios-grupos",
+    "tipo": "opcion",
+    "dificultad": "facil",
+    "titulo": "Qué hace chage -d 0",
+    "enunciado": "Ejecutas `chage -d 0 juan`. ¿Qué efecto tiene?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "`-d 0` pone la fecha del último cambio de contraseña en el día 0 (1 de enero de 1970), así que la contraseña se considera caducada y el sistema pide cambiarla al entrar. Para caducar la **cuenta** se usa `-E`, y para bloquearla `usermod -L` o `passwd -l`.",
+    "opciones": [
+      "Bloquea la cuenta de juan hasta que root la desbloquee.",
+      "Elimina la contraseña de juan y le permite entrar sin clave.",
+      "Obliga a juan a cambiar su contraseña en el próximo inicio de sesión.",
+      "Hace que la cuenta de juan caduque hoy."
+    ],
+    "correcta": 2
+  },
+  {
+    "id": "usr-10",
+    "dominio": "usuarios-grupos",
+    "tipo": "opcion",
+    "dificultad": "facil",
+    "titulo": "Borrar un usuario y su directorio",
+    "enunciado": "Tienes que eliminar al usuario `temporal` **junto con su directorio personal** `/home/temporal` y su buzón de correo. ¿Qué comando es el correcto?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "`userdel -r` borra la cuenta, el directorio personal y el buzón en `/var/spool/mail`. `userdel` sin `-r` deja los archivos huérfanos, `usermod -L` solo bloquea la cuenta y `rm -rf` borra los archivos pero la cuenta sigue en `/etc/passwd`.",
+    "opciones": [
+      "userdel temporal",
+      "userdel -r temporal",
+      "usermod -L temporal",
+      "rm -rf /home/temporal"
+    ],
+    "correcta": 1
+  }
+]

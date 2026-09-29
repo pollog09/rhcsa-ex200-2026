@@ -1,0 +1,8 @@
+services:
+  ex200:
+    build: .
+    image: rhcsa-ex200-2026
+    container_name: rhcsa-ex200
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

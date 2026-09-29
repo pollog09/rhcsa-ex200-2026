@@ -1,0 +1,203 @@
+[
+  {
+    "id": "seg-01",
+    "dominio": "seguridad",
+    "tipo": "tarea",
+    "dificultad": "dificil",
+    "titulo": "Servidor web en el puerto 82 con SELinux",
+    "enunciado": "En `servera`, Apache (`httpd`) está configurado con `Listen 82` en `/etc/httpd/conf/httpd.conf` para servir el contenido de `/var/www/html`, pero **el servicio no arranca**. Además, alguien copió `index.html` desde `/root` con `mv`.\n\nArréglalo para que:\n\n- `httpd` arranque y quede habilitado al inicio.\n- La página sea accesible desde otras máquinas en `http://servera.lab.example.com:82`.\n- **SELinux debe seguir en modo enforcing** (no lo desactives ni lo pongas en permissive).",
+    "pistas": [
+      "Mira el error: systemctl status httpd y journalctl -u httpd. Busca \"Permission denied\" al enlazar el puerto.",
+      "SELinux solo deja a httpd usar puertos con la etiqueta http_port_t. Mira semanage port -l | grep http.",
+      "No olvides el firewall y el contexto SELinux de los archivos movidos."
+    ],
+    "solucion": "# Asegúrate de tener semanage\ndnf install -y policycoreutils-python-utils\n\n# 1) Etiqueta el puerto 82 como puerto web\nsemanage port -a -t http_port_t -p tcp 82\n#   (si dijera que ya está definido, usa -m en lugar de -a)\n\n# 2) Restaura el contexto de los archivos web\nrestorecon -Rv /var/www/html\n\n# 3) Abre el puerto en el firewall (permanente)\nfirewall-cmd --permanent --add-port=82/tcp\nfirewall-cmd --reload\n\n# 4) Arranca y habilita Apache\nsystemctl enable --now httpd",
+    "verificacion": "getenforce                      # Enforcing\ngrep ^SELINUX= /etc/selinux/config   # SELINUX=enforcing\n# 82 debe aparecer en la lista de http_port_t\nsemanage port -l | grep -w http_port_t\n# Los archivos deben tener httpd_sys_content_t\nls -Z /var/www/html\nfirewall-cmd --permanent --list-ports\nsystemctl is-enabled httpd && systemctl is-active httpd\ncurl http://servera.lab.example.com:82/",
+    "explicacion": "La política de SELinux solo permite a `httpd_t` escuchar en puertos etiquetados como `http_port_t` (80, 443, 8080...), y el 82 no lo está; `semanage port` añade la etiqueta de forma permanente. `mv` conserva el contexto original (`admin_home_t`), por eso hace falta `restorecon`. Son tres capas distintas: SELinux del puerto, SELinux de los archivos y firewall."
+  },
+  {
+    "id": "seg-02",
+    "dominio": "seguridad",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Contexto SELinux persistente para /web",
+    "enunciado": "Vas a servir contenido web desde un directorio fuera de la ruta por defecto. Crea el directorio `/web` con un archivo `/web/index.html` que contenga `web propia`.\n\nConfigura SELinux para que `/web` y **todo su contenido presente y futuro** tengan el tipo `httpd_sys_content_t`, de forma que el cambio sobreviva a un reetiquetado completo del sistema.",
+    "pistas": [
+      "chcon no es persistente: usa semanage fcontext para crear la regla.",
+      "La expresión \"/web(/.*)?\" cubre el directorio y todo lo que haya dentro.",
+      "La regla no cambia nada por sí sola: después hay que aplicar restorecon."
+    ],
+    "solucion": "mkdir -p /web\necho \"web propia\" > /web/index.html\n\n# Regla persistente en la política\nsemanage fcontext -a -t httpd_sys_content_t \"/web(/.*)?\"\n\n# Aplica la regla a lo que ya existe\nrestorecon -Rv /web",
+    "verificacion": "# Deben mostrar httpd_sys_content_t\nls -Zd /web\nls -Z /web/index.html\n# La regla está guardada\nsemanage fcontext -l -C | grep /web\n# Simula un reetiquetado: no debería cambiar nada\nrestorecon -Rvn /web",
+    "explicacion": "`semanage fcontext` guarda la regla en la política (el `-C` muestra solo las reglas locales) y `restorecon` la aplica a los archivos. Las comillas en `\"/web(/.*)?\"` evitan que la shell interprete los caracteres especiales. Si solo usas `chcon`, el contexto se pierde con el siguiente `restorecon` o un reetiquetado."
+  },
+  {
+    "id": "seg-03",
+    "dominio": "seguridad",
+    "tipo": "opcion",
+    "dificultad": "media",
+    "titulo": "chcon frente a semanage fcontext",
+    "enunciado": "Ejecutaste `chcon -R -t httpd_sys_content_t /datos` y la web funcionó. Una semana después, tras un `restorecon -R /`, Apache devuelve \"403 Forbidden\" para `/datos`. ¿Por qué?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "`restorecon` pone a cada archivo el contexto que dicen las reglas de la política. Como `chcon` no añade ninguna regla, `/datos` volvió a su contexto por defecto (`default_t`), que Apache no puede leer. La forma persistente es `semanage fcontext -a -t httpd_sys_content_t \"/datos(/.*)?\"` seguido de `restorecon -Rv /datos`.",
+    "opciones": [
+      "Porque chcon solo funciona si SELinux está en modo permissive",
+      "Porque chcon cambia el contexto del archivo pero no crea una regla; restorecon aplicó la regla por defecto (default_t)",
+      "Porque restorecon desactiva el booleano httpd_read_user_content",
+      "Porque -R en chcon no se aplica a los archivos creados después del cambio, y restorecon borró los antiguos"
+    ],
+    "correcta": 1
+  },
+  {
+    "id": "seg-04",
+    "dominio": "seguridad",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Poner SELinux en enforcing",
+    "enunciado": "`servera` tiene SELinux en modo **permissive**. Cámbialo a **enforcing** ahora mismo y asegúrate de que siga en enforcing después de reiniciar.",
+    "pistas": [
+      "setenforce cambia el modo en caliente, pero no es persistente.",
+      "El modo al arrancar se define en /etc/selinux/config."
+    ],
+    "solucion": "# Cambio inmediato\nsetenforce 1\n\n# Cambio persistente\nsed -i 's/^SELINUX=.*/SELINUX=enforcing/' /etc/selinux/config",
+    "verificacion": "getenforce                             # Enforcing\ngrep ^SELINUX= /etc/selinux/config     # SELINUX=enforcing\nsestatus | grep -Ei 'current mode|mode from config'\n# Asegúrate de que no se fuerza otro modo desde el kernel\ngrubby --info=ALL | grep -E 'selinux=0|enforcing=0' || echo \"OK: sin parámetros que lo anulen\"",
+    "explicacion": "`setenforce 1` cambia el modo en memoria y `/etc/selinux/config` define el modo en cada arranque; necesitas los dos. Un parámetro de kernel como `enforcing=0` o `selinux=0` tiene prioridad sobre el archivo, por eso conviene revisarlo con `grubby`."
+  },
+  {
+    "id": "seg-05",
+    "dominio": "seguridad",
+    "tipo": "opcion",
+    "dificultad": "facil",
+    "titulo": "Qué hace setenforce 0",
+    "enunciado": "Estás diagnosticando un problema y ejecutas `setenforce 0`. ¿Qué ocurre?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "`setenforce` solo alterna entre enforcing (1) y permissive (0) y no sobrevive a un reinicio. En permissive, SELinux sigue etiquetando archivos y escribe las denegaciones en `/var/log/audit/audit.log`, pero no bloquea nada. Para desactivarlo del todo (no recomendado) habría que usar el parámetro de kernel `selinux=0`.",
+    "opciones": [
+      "SELinux se desactiva por completo hasta que se ejecute setenforce 1",
+      "SELinux pasa a permissive de forma permanente, incluso después de reiniciar",
+      "SELinux pasa a permissive hasta el próximo reinicio: registra las denegaciones pero no las bloquea",
+      "SELinux se desactiva y hay que reetiquetar todo el sistema al volver a activarlo"
+    ],
+    "correcta": 2
+  },
+  {
+    "id": "seg-06",
+    "dominio": "seguridad",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Booleano para páginas personales",
+    "enunciado": "Apache debe poder servir las páginas personales de los usuarios (`~/public_html`). La configuración de Apache ya está hecha, pero SELinux lo bloquea.\n\nBusca el **booleano** de SELinux relacionado con los directorios personales de httpd y actívalo de forma **persistente**.",
+    "pistas": [
+      "getsebool -a | grep httpd lista los booleanos de Apache.",
+      "semanage boolean -l muestra una descripción de cada booleano.",
+      "La opción -P de setsebool guarda el cambio."
+    ],
+    "solucion": "# Busca el booleano adecuado\ngetsebool -a | grep homedir\nsemanage boolean -l | grep httpd_enable_homedirs\n\n# Actívalo de forma persistente\nsetsebool -P httpd_enable_homedirs on",
+    "verificacion": "# Debe mostrar: httpd_enable_homedirs --> on\ngetsebool httpd_enable_homedirs\n# Las dos columnas (actual, por defecto/persistente) deben ser \"on\"\nsemanage boolean -l | grep httpd_enable_homedirs\n# Lista los booleanos cambiados respecto al valor por defecto\nsemanage boolean -l -C",
+    "explicacion": "Los booleanos activan o desactivan partes de la política de SELinux sin tener que escribir reglas. En `semanage boolean -l`, el paréntesis `(on , on)` muestra el valor actual y el valor guardado. Sin `-P`, el booleano vuelve a `off` al reiniciar. Recuerda que los permisos normales (por ejemplo, `chmod 711 /home/usuario`) también deben permitir el acceso."
+  },
+  {
+    "id": "seg-07",
+    "dominio": "seguridad",
+    "tipo": "opcion",
+    "dificultad": "facil",
+    "titulo": "La opción -P de setsebool",
+    "enunciado": "¿Cuál es la diferencia entre `setsebool ftpd_anon_write on` y `setsebool -P ftpd_anon_write on`?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "`-P` significa persistente: escribe el valor en la política en disco. Por eso tarda algo más que sin `-P`. En el examen, casi siempre se pide que los cambios sobrevivan al reinicio, así que usa `-P`.",
+    "opciones": [
+      "Con -P el cambio se guarda en la política y se mantiene tras reiniciar; sin -P se pierde al reiniciar",
+      "Con -P el cambio se aplica solo al proceso ftpd que está en ejecución",
+      "Sin -P el comando falla si SELinux está en enforcing",
+      "Con -P se imprime el valor anterior (print); el efecto es el mismo"
+    ],
+    "correcta": 0
+  },
+  {
+    "id": "seg-08",
+    "dominio": "seguridad",
+    "tipo": "opcion",
+    "dificultad": "facil",
+    "titulo": "Ver el contexto SELinux de un proceso",
+    "enunciado": "Quieres comprobar con qué dominio SELinux se está ejecutando el proceso `httpd`. ¿Qué comando lo muestra?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "La opción `-Z` muestra contextos SELinux en muchos comandos: `ps -eZ` para procesos (verás `system_u:system_r:httpd_t:s0`) y `ls -Z` para archivos. `ls -Z /usr/sbin/httpd` muestra el contexto del archivo ejecutable (`httpd_exec_t`), no el del proceso, y `semanage fcontext -l` lista reglas de archivos.",
+    "opciones": [
+      "ls -Z /usr/sbin/httpd",
+      "ps -eZ | grep httpd",
+      "getsebool httpd",
+      "semanage fcontext -l | grep httpd"
+    ],
+    "correcta": 1
+  },
+  {
+    "id": "seg-09",
+    "dominio": "seguridad",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "umask por defecto para un usuario",
+    "enunciado": "Configura el usuario `alex` (ya existe) para que, cada vez que inicie sesión con una shell bash:\n\n- Los archivos nuevos se creen con permisos `rw-r-----` (640).\n- Los directorios nuevos se creen con permisos `rwxr-x---` (750).\n\nEl cambio solo debe afectar a `alex`, no al resto de usuarios.",
+    "pistas": [
+      "Calcula la umask: 777 - 750 = 027 (y para archivos 666 - 027 = 640).",
+      "Un cambio solo para un usuario va en su ~/.bashrc; para todos, en /etc/profile.d/."
+    ],
+    "solucion": "# Añade la umask al ~/.bashrc de alex\necho \"umask 027\" >> /home/alex/.bashrc\n\n# (Para TODOS los usuarios se usaría, por ejemplo:\n#  echo \"umask 027\" > /etc/profile.d/umask.sh)",
+    "verificacion": "# Debe mostrar 0027\nsu - alex -c umask\n# Crea un archivo y un directorio de prueba como alex\nsu - alex -c 'touch prueba.txt; mkdir prueba.d; ls -ld prueba.txt prueba.d'\n# Esperado: -rw-r----- ... prueba.txt  y  drwxr-x--- ... prueba.d\nsu - alex -c 'rm -rf prueba.txt prueba.d'",
+    "explicacion": "La umask indica qué permisos se **quitan**: los archivos parten de 666 y los directorios de 777, así que con 027 quedan 640 y 750. El comando `umask` solo en la terminal se pierde al cerrar sesión; hay que ponerlo en un archivo que se lea al iniciar sesión. `~/.bash_profile` carga `~/.bashrc`, por eso funciona tanto en sesiones de login como en terminales nuevas."
+  },
+  {
+    "id": "seg-10",
+    "dominio": "seguridad",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Acceso SSH por clave",
+    "enunciado": "El usuario `operador` existe en `servera` y en `serverb`. Configúralo para que, desde `servera`, pueda conectarse por SSH a `operador@serverb` **sin escribir contraseña**, usando un par de claves ed25519 sin frase de paso.",
+    "pistas": [
+      "Genera las claves como el usuario operador, no como root.",
+      "ssh-keygen crea el par y ssh-copy-id copia la clave pública al authorized_keys remoto."
+    ],
+    "solucion": "# En servera, como operador\nsu - operador\n\n# Genera el par de claves (sin frase de paso)\nssh-keygen -t ed25519 -N '' -f ~/.ssh/id_ed25519\n\n# Copia la clave pública a serverb (pedirá la contraseña una última vez)\nssh-copy-id operador@serverb",
+    "verificacion": "# Como operador en servera: debe devolver el nombre de serverb sin pedir contraseña\nsu - operador -c 'ssh -o BatchMode=yes operador@serverb hostname'\n# En serverb: permisos correctos (700 para .ssh y 600 para authorized_keys)\nssh operador@serverb 'ls -ld ~/.ssh; ls -l ~/.ssh/authorized_keys'",
+    "explicacion": "La clave privada se queda en `servera` (`~/.ssh/id_ed25519`) y la pública se añade a `~/.ssh/authorized_keys` en `serverb`. `ssh-copy-id` ya pone los permisos correctos; si lo haces a mano y `.ssh` o `authorized_keys` tienen permisos demasiado abiertos, sshd ignora la clave. `BatchMode=yes` hace que ssh falle en vez de pedir contraseña, así compruebas que la clave funciona."
+  },
+  {
+    "id": "seg-11",
+    "dominio": "seguridad",
+    "tipo": "tarea",
+    "dificultad": "dificil",
+    "titulo": "Endurecer sshd con sshd_config.d",
+    "enunciado": "En `serverb`, configura el servidor SSH para que:\n\n- `root` **no** pueda iniciar sesión por SSH.\n- Nadie pueda autenticarse con contraseña (solo con clave).\n\nHaz el cambio en un archivo nuevo `/etc/ssh/sshd_config.d/00-seguridad.conf`, sin editar `/etc/ssh/sshd_config`. **Antes** de aplicarlo, comprueba que tienes acceso por clave (por ejemplo, el de `operador` del ejercicio anterior) para no quedarte fuera.",
+    "pistas": [
+      "Las directivas son PermitRootLogin y PasswordAuthentication.",
+      "sshd usa el PRIMER valor que encuentra; los archivos de sshd_config.d se leen en orden alfabético, por eso el prefijo 00-.",
+      "sshd -t comprueba la sintaxis y sshd -T muestra la configuración efectiva."
+    ],
+    "solucion": "cat > /etc/ssh/sshd_config.d/00-seguridad.conf <<'EOF'\nPermitRootLogin no\nPasswordAuthentication no\nEOF\n\n# Comprueba la sintaxis antes de reiniciar\nsshd -t\n\n# Aplica los cambios\nsystemctl restart sshd",
+    "verificacion": "# Configuración efectiva: permitrootlogin no / passwordauthentication no\nsshd -T | grep -Ei '^(permitrootlogin|passwordauthentication) '\nsystemctl is-active sshd\nsystemctl is-enabled sshd\n# Desde servera: debe fallar con \"Permission denied (publickey...)\"\nssh -o PubkeyAuthentication=no -o PreferredAuthentications=password operador@serverb\n# Desde servera: con clave debe seguir funcionando\nssh -o BatchMode=yes operador@serverb hostname",
+    "explicacion": "`/etc/ssh/sshd_config` incluye `/etc/ssh/sshd_config.d/*.conf` al principio, y en sshd gana el primer valor leído. Si el instalador creó un archivo como `01-permitrootlogin.conf`, tu `00-seguridad.conf` se lee antes y tiene prioridad. `sshd -T` es la forma fiable de ver qué valor se aplica realmente."
+  },
+  {
+    "id": "seg-12",
+    "dominio": "seguridad",
+    "tipo": "tarea",
+    "dificultad": "dificil",
+    "titulo": "Zonas de firewalld por red de origen",
+    "enunciado": "En `servera` vas a publicar una base de datos MariaDB, pero solo para la red interna `192.168.50.0/24`.\n\nConfigura firewalld de forma **permanente** para que:\n\n- El tráfico que venga de `192.168.50.0/24` se asigne a la zona `internal`.\n- En la zona `internal` se permita el servicio `mysql`.\n- La zona `public` **no** permita `mysql`.",
+    "pistas": [
+      "Una zona puede asignarse por interfaz o por dirección de origen (--add-source).",
+      "Indica siempre --zone=internal para no tocar la zona por defecto.",
+      "Comprueba ambas zonas con --list-all."
+    ],
+    "solucion": "# Asocia la red de origen a la zona internal\nfirewall-cmd --permanent --zone=internal --add-source=192.168.50.0/24\n\n# Permite MariaDB/MySQL (3306/tcp) solo en esa zona\nfirewall-cmd --permanent --zone=internal --add-service=mysql\n\n# Por si acaso, asegúrate de que public no lo permite\nfirewall-cmd --permanent --zone=public --remove-service=mysql\n\nfirewall-cmd --reload",
+    "verificacion": "# sources: 192.168.50.0/24 y services: ... mysql\nfirewall-cmd --zone=internal --list-all\n# mysql NO debe aparecer\nfirewall-cmd --zone=public --list-services\n# Zonas activas y lo que las activa\nfirewall-cmd --get-active-zones\n# Comprobación de la configuración permanente\nfirewall-cmd --permanent --zone=internal --list-all",
+    "explicacion": "firewalld decide la zona de cada paquete primero por la dirección de origen y, si no coincide ninguna, por la interfaz. Así, los equipos de `192.168.50.0/24` usan las reglas de `internal` y el resto sigue usando `public`. Quitar `mysql` de `public` puede dar un aviso \"NOT_ENABLED\" si no estaba; es normal."
+  }
+]

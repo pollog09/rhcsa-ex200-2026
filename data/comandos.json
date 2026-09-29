@@ -1,0 +1,1208 @@
+[
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "ls",
+    "descripcion": "Lista archivos y carpetas",
+    "ejemplo": "ls -lah /etc"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "cd",
+    "descripcion": "Cambia de directorio",
+    "ejemplo": "cd /var/log"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "pwd",
+    "descripcion": "Muestra la carpeta actual",
+    "ejemplo": "pwd"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "mkdir",
+    "descripcion": "Crea carpetas",
+    "ejemplo": "mkdir -p /datos/2026/enero"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "touch",
+    "descripcion": "Crea un archivo vacío o actualiza su fecha",
+    "ejemplo": "touch /tmp/nota.txt"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "cp",
+    "descripcion": "Copia archivos o carpetas",
+    "ejemplo": "cp -a /etc/skel /tmp/copia"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "mv",
+    "descripcion": "Mueve o renombra archivos",
+    "ejemplo": "mv nota.txt /tmp/nota-vieja.txt"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "rm",
+    "descripcion": "Borra archivos o carpetas",
+    "ejemplo": "rm -r /tmp/copia"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "ln",
+    "descripcion": "Crea un enlace duro",
+    "ejemplo": "ln /datos/a.txt /datos/a_duro.txt"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "ln -s",
+    "descripcion": "Crea un enlace simbólico",
+    "ejemplo": "ln -s /etc/hosts /root/hosts_link"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "cat",
+    "descripcion": "Muestra el contenido de un archivo",
+    "ejemplo": "cat /etc/os-release"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "less",
+    "descripcion": "Muestra un archivo página por página",
+    "ejemplo": "less /var/log/messages"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "grep",
+    "descripcion": "Busca líneas que coinciden con un patrón",
+    "ejemplo": "grep -E \"^(root|ana):\" /etc/passwd"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "find",
+    "descripcion": "Busca archivos por nombre, dueño, tamaño o permisos",
+    "ejemplo": "find / -user harry -type f 2>/dev/null"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "wc",
+    "descripcion": "Cuenta líneas, palabras o bytes",
+    "ejemplo": "wc -l /etc/passwd"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "head",
+    "descripcion": "Muestra las primeras líneas",
+    "ejemplo": "head -n 5 /etc/passwd"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "tail",
+    "descripcion": "Muestra las últimas líneas o sigue un archivo",
+    "ejemplo": "tail -f /var/log/secure"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "tar",
+    "descripcion": "Empaqueta y comprime archivos",
+    "ejemplo": "tar -czf /root/etc.tar.gz /etc"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "gzip",
+    "descripcion": "Comprime un archivo con gzip",
+    "ejemplo": "gzip /tmp/informe.txt"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "bzip2",
+    "descripcion": "Comprime un archivo con bzip2",
+    "ejemplo": "bzip2 /tmp/informe.txt"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "chmod",
+    "descripcion": "Cambia los permisos de un archivo",
+    "ejemplo": "chmod 750 script.sh"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "chown",
+    "descripcion": "Cambia el dueño y el grupo",
+    "ejemplo": "chown ana:ventas informe.txt"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "su",
+    "descripcion": "Cambia a otro usuario",
+    "ejemplo": "su - ana"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "ssh",
+    "descripcion": "Abre una sesión remota segura",
+    "ejemplo": "ssh ana@servidor1"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "vim",
+    "descripcion": "Edita archivos de texto",
+    "ejemplo": "vim /etc/hosts"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "man",
+    "descripcion": "Abre el manual de un comando",
+    "ejemplo": "man -k partition"
+  },
+  {
+    "dominio": "software",
+    "comando": "dnf install",
+    "descripcion": "Instala paquetes con sus dependencias",
+    "ejemplo": "dnf install -y httpd"
+  },
+  {
+    "dominio": "software",
+    "comando": "dnf remove",
+    "descripcion": "Desinstala paquetes",
+    "ejemplo": "dnf remove -y vsftpd"
+  },
+  {
+    "dominio": "software",
+    "comando": "dnf search",
+    "descripcion": "Busca paquetes por nombre o descripción",
+    "ejemplo": "dnf search nfs"
+  },
+  {
+    "dominio": "software",
+    "comando": "dnf info",
+    "descripcion": "Muestra detalles de un paquete",
+    "ejemplo": "dnf info httpd"
+  },
+  {
+    "dominio": "software",
+    "comando": "dnf provides",
+    "descripcion": "Indica qué paquete trae un archivo",
+    "ejemplo": "dnf provides \"*/semanage\""
+  },
+  {
+    "dominio": "software",
+    "comando": "dnf repolist",
+    "descripcion": "Lista los repositorios habilitados",
+    "ejemplo": "dnf repolist -v"
+  },
+  {
+    "dominio": "software",
+    "comando": "dnf history",
+    "descripcion": "Muestra y deshace transacciones",
+    "ejemplo": "dnf history undo 5"
+  },
+  {
+    "dominio": "software",
+    "comando": "dnf config-manager",
+    "descripcion": "Agrega un repositorio por URL",
+    "ejemplo": "dnf config-manager --add-repo http://repo.ejemplo.com/BaseOS"
+  },
+  {
+    "dominio": "software",
+    "comando": "dnf clean",
+    "descripcion": "Limpia la caché de repositorios",
+    "ejemplo": "dnf clean all"
+  },
+  {
+    "dominio": "software",
+    "comando": "rpm -qa",
+    "descripcion": "Lista los paquetes instalados",
+    "ejemplo": "rpm -qa | grep httpd"
+  },
+  {
+    "dominio": "software",
+    "comando": "rpm -qi",
+    "descripcion": "Muestra información de un paquete instalado",
+    "ejemplo": "rpm -qi openssh-server"
+  },
+  {
+    "dominio": "software",
+    "comando": "rpm -ql",
+    "descripcion": "Lista los archivos de un paquete",
+    "ejemplo": "rpm -ql httpd"
+  },
+  {
+    "dominio": "software",
+    "comando": "rpm -qf",
+    "descripcion": "Indica a qué paquete pertenece un archivo",
+    "ejemplo": "rpm -qf /etc/ssh/sshd_config"
+  },
+  {
+    "dominio": "software",
+    "comando": "flatpak remote-add",
+    "descripcion": "Agrega un repositorio Flatpak",
+    "ejemplo": "flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo"
+  },
+  {
+    "dominio": "software",
+    "comando": "flatpak remotes",
+    "descripcion": "Lista los repositorios Flatpak",
+    "ejemplo": "flatpak remotes"
+  },
+  {
+    "dominio": "software",
+    "comando": "flatpak install",
+    "descripcion": "Instala una aplicación Flatpak",
+    "ejemplo": "flatpak install -y flathub org.gnome.Calculator"
+  },
+  {
+    "dominio": "software",
+    "comando": "flatpak list",
+    "descripcion": "Lista las aplicaciones Flatpak instaladas",
+    "ejemplo": "flatpak list --app"
+  },
+  {
+    "dominio": "software",
+    "comando": "flatpak uninstall",
+    "descripcion": "Desinstala una aplicación Flatpak",
+    "ejemplo": "flatpak uninstall -y org.gnome.Calculator"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "#!/bin/bash",
+    "descripcion": "Indica el intérprete del script",
+    "ejemplo": "#!/bin/bash"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "bash -x",
+    "descripcion": "Ejecuta un script mostrando cada paso",
+    "ejemplo": "bash -x /usr/local/bin/backup.sh"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "bash -n",
+    "descripcion": "Revisa la sintaxis sin ejecutar",
+    "ejemplo": "bash -n /usr/local/bin/backup.sh"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "$1 $2",
+    "descripcion": "Leen los argumentos del script",
+    "ejemplo": "echo \"Usuario: $1, grupo: $2\""
+  },
+  {
+    "dominio": "scripts",
+    "comando": "$#",
+    "descripcion": "Cuenta los argumentos recibidos",
+    "ejemplo": "if [ $# -ne 1 ]; then exit 1; fi"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "$?",
+    "descripcion": "Guarda el código de salida del último comando",
+    "ejemplo": "grep ana /etc/passwd; echo $?"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "if",
+    "descripcion": "Ejecuta código según una condición",
+    "ejemplo": "if [ -f /etc/hosts ]; then echo existe; fi"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "test",
+    "descripcion": "Evalúa una condición sobre archivos, texto o números",
+    "ejemplo": "test -d /datos && echo carpeta"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "[ ]",
+    "descripcion": "Forma corta de test",
+    "ejemplo": "[ \"$1\" = \"ana\" ] && echo hola"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "for",
+    "descripcion": "Repite una acción para cada elemento",
+    "ejemplo": "for u in ana luis; do useradd \"$u\"; done"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "while read",
+    "descripcion": "Recorre un archivo línea a línea",
+    "ejemplo": "while read u; do useradd \"$u\"; done < /root/lista.txt"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "$( )",
+    "descripcion": "Guarda la salida de un comando en una variable",
+    "ejemplo": "hoy=$(date +%F)"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "exit",
+    "descripcion": "Termina el script con un código de salida",
+    "ejemplo": "exit 1"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "echo",
+    "descripcion": "Imprime texto o variables",
+    "ejemplo": "echo \"Uso: $0 <usuario>\" >&2"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "awk",
+    "descripcion": "Extrae columnas de un texto",
+    "ejemplo": "awk -F: '$3>=1000 {print $1}' /etc/passwd"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "cut",
+    "descripcion": "Corta campos de cada línea",
+    "ejemplo": "cut -d: -f1 /etc/passwd"
+  },
+  {
+    "dominio": "scripts",
+    "comando": "logger",
+    "descripcion": "Escribe un mensaje en el journal",
+    "ejemplo": "logger -t backup \"Respaldo terminado\""
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "systemctl reboot",
+    "descripcion": "Reinicia el sistema",
+    "ejemplo": "systemctl reboot"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "systemctl poweroff",
+    "descripcion": "Apaga el sistema",
+    "ejemplo": "systemctl poweroff"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "systemctl isolate",
+    "descripcion": "Cambia al target indicado ahora",
+    "ejemplo": "systemctl isolate multi-user.target"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "systemd.unit=",
+    "descripcion": "Arranca una vez en otro target desde GRUB",
+    "ejemplo": "systemd.unit=rescue.target"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "rd.break",
+    "descripcion": "Detiene el arranque en el initramfs para resetear root",
+    "ejemplo": "linux ... rd.break"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "mount -o remount,rw",
+    "descripcion": "Remonta el disco real en modo escritura",
+    "ejemplo": "mount -o remount,rw /sysroot"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "chroot",
+    "descripcion": "Entra al sistema instalado desde el initramfs",
+    "ejemplo": "chroot /sysroot"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "touch /.autorelabel",
+    "descripcion": "Pide reetiquetar SELinux en el próximo arranque",
+    "ejemplo": "touch /.autorelabel"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "top",
+    "descripcion": "Muestra procesos y consumo en vivo",
+    "ejemplo": "top"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "ps",
+    "descripcion": "Lista procesos con su consumo",
+    "ejemplo": "ps aux --sort=-%cpu | head"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "kill",
+    "descripcion": "Envía una señal a un proceso",
+    "ejemplo": "kill -9 1234"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "pkill",
+    "descripcion": "Termina procesos por nombre o usuario",
+    "ejemplo": "pkill -u ana"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "nice",
+    "descripcion": "Arranca un proceso con otra prioridad",
+    "ejemplo": "nice -n 10 tar -czf /tmp/b.tgz /usr"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "renice",
+    "descripcion": "Cambia la prioridad de un proceso en marcha",
+    "ejemplo": "renice -n 5 -p 1234"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "tuned-adm",
+    "descripcion": "Aplica perfiles de rendimiento",
+    "ejemplo": "tuned-adm profile virtual-guest"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "journalctl",
+    "descripcion": "Consulta los logs del journal",
+    "ejemplo": "journalctl -u sshd -p err -b"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "Storage=persistent",
+    "descripcion": "Guarda el journal en disco",
+    "ejemplo": "printf \"[Journal]\\nStorage=persistent\\n\" > /etc/systemd/journald.conf.d/persist.conf"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "scp",
+    "descripcion": "Copia archivos por SSH",
+    "ejemplo": "scp /root/a.txt ana@srv2:/tmp/"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "sftp",
+    "descripcion": "Transfiere archivos en sesión interactiva por SSH",
+    "ejemplo": "sftp ana@srv2"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "rsync",
+    "descripcion": "Sincroniza archivos de forma incremental",
+    "ejemplo": "rsync -avz /datos/ ana@srv2:/respaldo/"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "lsblk",
+    "descripcion": "Muestra discos, particiones y montajes",
+    "ejemplo": "lsblk -f"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "blkid",
+    "descripcion": "Muestra UUID, LABEL y tipo de cada dispositivo",
+    "ejemplo": "blkid /dev/vdb1"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "parted",
+    "descripcion": "Crea y muestra particiones",
+    "ejemplo": "parted /dev/vdb mkpart datos xfs 1MiB 1GiB"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "parted mklabel",
+    "descripcion": "Crea una tabla de particiones GPT",
+    "ejemplo": "parted /dev/vdb mklabel gpt"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "fdisk",
+    "descripcion": "Particiona un disco de forma interactiva",
+    "ejemplo": "fdisk /dev/vdb"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "gdisk",
+    "descripcion": "Particiona discos GPT de forma interactiva",
+    "ejemplo": "gdisk /dev/vdb"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "udevadm settle",
+    "descripcion": "Espera a que el sistema detecte las particiones nuevas",
+    "ejemplo": "udevadm settle"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "pvcreate",
+    "descripcion": "Crea un volumen físico LVM",
+    "ejemplo": "pvcreate /dev/vdb2"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "vgcreate",
+    "descripcion": "Crea un grupo de volúmenes",
+    "ejemplo": "vgcreate -s 16M vgdatos /dev/vdb2"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "lvcreate",
+    "descripcion": "Crea un volumen lógico",
+    "ejemplo": "lvcreate -n lvdatos -L 500M vgdatos"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "pvs / vgs / lvs",
+    "descripcion": "Resumen de cada capa de LVM",
+    "ejemplo": "lvs"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "vgdisplay",
+    "descripcion": "Muestra el detalle de un VG",
+    "ejemplo": "vgdisplay vgdatos"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "lvremove",
+    "descripcion": "Borra un volumen lógico",
+    "ejemplo": "lvremove -y /dev/vgdatos/lvdatos"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "vgremove",
+    "descripcion": "Borra un grupo de volúmenes",
+    "ejemplo": "vgremove vgdatos"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "pvremove",
+    "descripcion": "Quita la marca LVM de un dispositivo",
+    "ejemplo": "pvremove /dev/vdb2"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "mkswap",
+    "descripcion": "Prepara un dispositivo como swap",
+    "ejemplo": "mkswap /dev/vdb3"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "swapon",
+    "descripcion": "Activa la swap",
+    "ejemplo": "swapon -a && swapon --show"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "mount -a",
+    "descripcion": "Monta todo lo que está en fstab",
+    "ejemplo": "mount -a"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "findmnt",
+    "descripcion": "Muestra montajes y valida fstab",
+    "ejemplo": "findmnt --verify"
+  },
+  {
+    "dominio": "almacenamiento-local",
+    "comando": "systemctl daemon-reload",
+    "descripcion": "Hace que systemd relea fstab y unidades",
+    "ejemplo": "systemctl daemon-reload"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "mkfs.xfs",
+    "descripcion": "Crea un sistema de archivos XFS",
+    "ejemplo": "mkfs.xfs /dev/vdb1"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "mkfs.ext4",
+    "descripcion": "Crea un sistema de archivos ext4",
+    "ejemplo": "mkfs.ext4 -L backup /dev/vdb2"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "mkfs.vfat",
+    "descripcion": "Crea un sistema de archivos VFAT",
+    "ejemplo": "mkfs.vfat /dev/vdb3"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "mount",
+    "descripcion": "Monta un sistema de archivos",
+    "ejemplo": "mount /dev/vdb1 /mnt/xfs"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "umount",
+    "descripcion": "Desmonta un sistema de archivos",
+    "ejemplo": "umount /mnt/xfs"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "df",
+    "descripcion": "Muestra espacio usado y tipo de cada montaje",
+    "ejemplo": "df -hT"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "lvextend -r",
+    "descripcion": "Amplía un LV y su sistema de archivos",
+    "ejemplo": "lvextend -r -L +300M /dev/vgdatos/lvdatos"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "vgextend",
+    "descripcion": "Agrega un PV a un grupo de volúmenes",
+    "ejemplo": "vgextend vgdatos /dev/vdc1"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "xfs_growfs",
+    "descripcion": "Amplía un XFS montado",
+    "ejemplo": "xfs_growfs /datos"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "resize2fs",
+    "descripcion": "Amplía un ext4",
+    "ejemplo": "resize2fs /dev/vgdatos/lvapp"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "showmount",
+    "descripcion": "Lista lo que exporta un servidor NFS",
+    "ejemplo": "showmount -e servidor.ejemplo.com"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "mount -t nfs",
+    "descripcion": "Monta una carpeta NFS",
+    "ejemplo": "mount -t nfs servidor.ejemplo.com:/export /mnt/nfs"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "auto.master.d",
+    "descripcion": "Define un punto de montaje de autofs",
+    "ejemplo": "echo \"/remoto /etc/auto.remoto\" > /etc/auto.master.d/remoto.autofs"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "autofs",
+    "descripcion": "Monta carpetas al usarlas",
+    "ejemplo": "systemctl enable --now autofs"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "chmod g+s",
+    "descripcion": "Activa SGID para heredar el grupo",
+    "ejemplo": "chmod 2770 /srv/ventas"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "chmod o+t",
+    "descripcion": "Activa el sticky bit en una carpeta",
+    "ejemplo": "chmod 1777 /srv/comun"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "umask",
+    "descripcion": "Define los permisos de lo que se crea",
+    "ejemplo": "umask 027"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "setfacl",
+    "descripcion": "Agrega permisos ACL a usuarios o grupos",
+    "ejemplo": "setfacl -m u:natasha:rw /var/tmp/fstab"
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "comando": "getfacl",
+    "descripcion": "Muestra las ACL de un archivo",
+    "ejemplo": "getfacl /var/tmp/fstab"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "crontab",
+    "descripcion": "Programa tareas repetitivas",
+    "ejemplo": "crontab -e -u natasha"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "at",
+    "descripcion": "Programa una tarea una sola vez",
+    "ejemplo": "echo \"touch /tmp/hecho\" | at now + 5 minutes"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "atq",
+    "descripcion": "Lista las tareas de at pendientes",
+    "ejemplo": "atq"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "atrm",
+    "descripcion": "Borra una tarea de at",
+    "ejemplo": "atrm 3"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "systemctl list-timers",
+    "descripcion": "Lista los timers de systemd",
+    "ejemplo": "systemctl list-timers"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "OnCalendar",
+    "descripcion": "Define cuándo se dispara un timer",
+    "ejemplo": "OnCalendar=*-*-* 03:00:00"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "systemctl enable --now",
+    "descripcion": "Habilita e inicia un servicio o timer",
+    "ejemplo": "systemctl enable --now limpieza.timer"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "systemctl disable",
+    "descripcion": "Quita un servicio del arranque",
+    "ejemplo": "systemctl disable --now cups"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "systemctl is-enabled",
+    "descripcion": "Indica si un servicio arranca solo",
+    "ejemplo": "systemctl is-enabled httpd"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "systemctl mask",
+    "descripcion": "Impide que un servicio se inicie",
+    "ejemplo": "systemctl mask telnet.socket"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "systemctl set-default",
+    "descripcion": "Cambia el target por defecto",
+    "ejemplo": "systemctl set-default multi-user.target"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "systemctl get-default",
+    "descripcion": "Muestra el target por defecto",
+    "ejemplo": "systemctl get-default"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "chronyc sources",
+    "descripcion": "Muestra los servidores de hora",
+    "ejemplo": "chronyc sources -v"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "timedatectl",
+    "descripcion": "Muestra y ajusta hora y zona horaria",
+    "ejemplo": "timedatectl set-timezone America/Santiago"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "subscription-manager",
+    "descripcion": "Registra el sistema en el CDN de Red Hat",
+    "ejemplo": "subscription-manager register"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "dnf install ./",
+    "descripcion": "Instala un RPM desde un archivo local",
+    "ejemplo": "dnf install -y ./herramienta.rpm"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "grubby",
+    "descripcion": "Cambia el kernel y sus opciones de arranque",
+    "ejemplo": "grubby --update-kernel=ALL --args=\"quiet\""
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "grubby --default-kernel",
+    "descripcion": "Muestra el kernel por defecto",
+    "ejemplo": "grubby --default-kernel"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "grub2-mkconfig",
+    "descripcion": "Regenera la configuración de GRUB",
+    "ejemplo": "grub2-mkconfig -o /boot/grub2/grub.cfg"
+  },
+  {
+    "dominio": "redes",
+    "comando": "ip addr",
+    "descripcion": "Muestra las direcciones IP",
+    "ejemplo": "ip -br addr"
+  },
+  {
+    "dominio": "redes",
+    "comando": "ip route",
+    "descripcion": "Muestra las rutas y el gateway",
+    "ejemplo": "ip route"
+  },
+  {
+    "dominio": "redes",
+    "comando": "nmcli device status",
+    "descripcion": "Muestra interfaces y su perfil",
+    "ejemplo": "nmcli device status"
+  },
+  {
+    "dominio": "redes",
+    "comando": "nmcli connection show",
+    "descripcion": "Lista los perfiles de red",
+    "ejemplo": "nmcli con show"
+  },
+  {
+    "dominio": "redes",
+    "comando": "nmcli connection add",
+    "descripcion": "Crea un perfil de red",
+    "ejemplo": "nmcli con add con-name estatica ifname enp1s0 type ethernet ipv4.method manual ipv4.addresses 192.168.10.20/24"
+  },
+  {
+    "dominio": "redes",
+    "comando": "nmcli connection modify",
+    "descripcion": "Modifica un perfil de red",
+    "ejemplo": "nmcli con mod estatica ipv4.gateway 192.168.10.1 ipv4.dns 192.168.10.1"
+  },
+  {
+    "dominio": "redes",
+    "comando": "ipv6.addresses",
+    "descripcion": "Asigna una IPv6 fija a un perfil",
+    "ejemplo": "nmcli con mod estatica ipv6.method manual ipv6.addresses 2001:db8::20/64"
+  },
+  {
+    "dominio": "redes",
+    "comando": "nmcli connection up",
+    "descripcion": "Activa un perfil y aplica sus cambios",
+    "ejemplo": "nmcli con up estatica"
+  },
+  {
+    "dominio": "redes",
+    "comando": "connection.autoconnect",
+    "descripcion": "Activa el perfil al arrancar",
+    "ejemplo": "nmcli con mod estatica connection.autoconnect yes"
+  },
+  {
+    "dominio": "redes",
+    "comando": "hostnamectl",
+    "descripcion": "Muestra o cambia el nombre del equipo",
+    "ejemplo": "hostnamectl set-hostname servidor1.ejemplo.com"
+  },
+  {
+    "dominio": "redes",
+    "comando": "/etc/hosts",
+    "descripcion": "Resuelve nombres de forma local",
+    "ejemplo": "echo \"192.168.10.30 srv2\" >> /etc/hosts"
+  },
+  {
+    "dominio": "redes",
+    "comando": "getent hosts",
+    "descripcion": "Resuelve un nombre como lo hace el sistema",
+    "ejemplo": "getent hosts srv2"
+  },
+  {
+    "dominio": "redes",
+    "comando": "dig",
+    "descripcion": "Consulta un servidor DNS",
+    "ejemplo": "dig +short redhat.com"
+  },
+  {
+    "dominio": "redes",
+    "comando": "ping",
+    "descripcion": "Comprueba si un equipo responde",
+    "ejemplo": "ping -c3 192.168.10.1"
+  },
+  {
+    "dominio": "redes",
+    "comando": "ss",
+    "descripcion": "Muestra puertos abiertos y conexiones",
+    "ejemplo": "ss -tlnp"
+  },
+  {
+    "dominio": "redes",
+    "comando": "firewall-cmd --add-service",
+    "descripcion": "Abre un servicio en el firewall",
+    "ejemplo": "firewall-cmd --permanent --add-service=http"
+  },
+  {
+    "dominio": "redes",
+    "comando": "firewall-cmd --add-port",
+    "descripcion": "Abre un puerto en el firewall",
+    "ejemplo": "firewall-cmd --permanent --add-port=8080/tcp"
+  },
+  {
+    "dominio": "redes",
+    "comando": "firewall-cmd --reload",
+    "descripcion": "Aplica la configuración permanente",
+    "ejemplo": "firewall-cmd --reload"
+  },
+  {
+    "dominio": "redes",
+    "comando": "firewall-cmd --list-all",
+    "descripcion": "Muestra la configuración de la zona",
+    "ejemplo": "firewall-cmd --list-all"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "useradd",
+    "descripcion": "Crea un usuario nuevo",
+    "ejemplo": "useradd -u 2000 -G wheel ana"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "useradd -s",
+    "descripcion": "Crea un usuario con otra shell",
+    "ejemplo": "useradd -s /sbin/nologin sarah"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "usermod -aG",
+    "descripcion": "Agrega un usuario a un grupo extra",
+    "ejemplo": "usermod -aG ventas ana"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "usermod -L",
+    "descripcion": "Bloquea una cuenta",
+    "ejemplo": "usermod -L ana"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "userdel",
+    "descripcion": "Borra un usuario",
+    "ejemplo": "userdel -r luis"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "id",
+    "descripcion": "Muestra UID, GID y grupos de un usuario",
+    "ejemplo": "id ana"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "passwd",
+    "descripcion": "Asigna o cambia una contraseña",
+    "ejemplo": "passwd ana"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "chpasswd",
+    "descripcion": "Asigna contraseñas sin interacción",
+    "ejemplo": "echo \"ana:Clave2026\" | chpasswd"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "chage -l",
+    "descripcion": "Muestra la caducidad de la contraseña",
+    "ejemplo": "chage -l ana"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "chage -M",
+    "descripcion": "Fija los días máximos de la contraseña",
+    "ejemplo": "chage -M 90 -W 7 ana"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "chage -d 0",
+    "descripcion": "Obliga a cambiar la contraseña al entrar",
+    "ejemplo": "chage -d 0 ana"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "chage -E",
+    "descripcion": "Fija la fecha de vencimiento de la cuenta",
+    "ejemplo": "chage -E 2026-12-31 ana"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "/etc/login.defs",
+    "descripcion": "Define la política para usuarios nuevos",
+    "ejemplo": "PASS_MAX_DAYS 60"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "groupadd",
+    "descripcion": "Crea un grupo",
+    "ejemplo": "groupadd -g 3000 soporte"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "groupmod",
+    "descripcion": "Modifica un grupo",
+    "ejemplo": "groupmod -n comercial ventas"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "groupdel",
+    "descripcion": "Borra un grupo",
+    "ejemplo": "groupdel soporte"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "gpasswd -a",
+    "descripcion": "Agrega un miembro a un grupo",
+    "ejemplo": "gpasswd -a ana ventas"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "gpasswd -d",
+    "descripcion": "Quita un miembro de un grupo",
+    "ejemplo": "gpasswd -d ana ventas"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "getent group",
+    "descripcion": "Muestra los miembros de un grupo",
+    "ejemplo": "getent group ventas"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "visudo",
+    "descripcion": "Edita sudoers validando la sintaxis",
+    "ejemplo": "visudo -f /etc/sudoers.d/admins"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "sudo -l",
+    "descripcion": "Muestra qué puede hacer un usuario con sudo",
+    "ejemplo": "sudo -l -U ana"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "firewall-cmd --get-active-zones",
+    "descripcion": "Muestra las zonas activas",
+    "ejemplo": "firewall-cmd --get-active-zones"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "firewall-cmd --add-source",
+    "descripcion": "Asigna una red de origen a una zona",
+    "ejemplo": "firewall-cmd --permanent --zone=internal --add-source=192.168.56.0/24"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "firewall-cmd --remove-service",
+    "descripcion": "Cierra un servicio en el firewall",
+    "ejemplo": "firewall-cmd --permanent --remove-service=cockpit"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "umask",
+    "descripcion": "Muestra o cambia la máscara de permisos",
+    "ejemplo": "umask 077"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "ssh-keygen",
+    "descripcion": "Crea un par de llaves SSH",
+    "ejemplo": "ssh-keygen -t ed25519"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "ssh-copy-id",
+    "descripcion": "Copia la llave pública a otro servidor",
+    "ejemplo": "ssh-copy-id ana@servidor2"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "sshd -t",
+    "descripcion": "Valida la configuración de SSH",
+    "ejemplo": "sshd -t && systemctl reload sshd"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "getenforce",
+    "descripcion": "Muestra el modo de SELinux",
+    "ejemplo": "getenforce"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "setenforce",
+    "descripcion": "Cambia el modo de SELinux hasta reiniciar",
+    "ejemplo": "setenforce 1"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "/etc/selinux/config",
+    "descripcion": "Fija el modo de SELinux de forma permanente",
+    "ejemplo": "SELINUX=enforcing"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "sestatus",
+    "descripcion": "Muestra el estado completo de SELinux",
+    "ejemplo": "sestatus"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "ls -Z",
+    "descripcion": "Muestra el contexto de archivos",
+    "ejemplo": "ls -Z /var/www/html"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "ps -Z",
+    "descripcion": "Muestra el contexto de procesos",
+    "ejemplo": "ps -eZ | grep httpd"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "semanage fcontext",
+    "descripcion": "Define el contexto de una ruta de forma persistente",
+    "ejemplo": "semanage fcontext -a -t httpd_sys_content_t \"/web(/.*)?\""
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "restorecon",
+    "descripcion": "Aplica el contexto correcto a archivos",
+    "ejemplo": "restorecon -Rv /web"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "chcon",
+    "descripcion": "Cambia un contexto de forma temporal",
+    "ejemplo": "chcon -t httpd_sys_content_t /web/index.html"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "semanage port",
+    "descripcion": "Permite un puerto a un tipo de SELinux",
+    "ejemplo": "semanage port -a -t http_port_t -p tcp 82"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "getsebool",
+    "descripcion": "Muestra el valor de los booleanos",
+    "ejemplo": "getsebool -a | grep httpd"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "setsebool -P",
+    "descripcion": "Cambia un booleano de forma persistente",
+    "ejemplo": "setsebool -P httpd_enable_homedirs on"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "semanage boolean -l",
+    "descripcion": "Lista booleanos con su descripción",
+    "ejemplo": "semanage boolean -l | grep home"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "ausearch",
+    "descripcion": "Busca denegaciones en el log de auditoría",
+    "ejemplo": "ausearch -m AVC -ts recent"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "sealert",
+    "descripcion": "Explica una denegación y sugiere solución",
+    "ejemplo": "sealert -a /var/log/audit/audit.log"
+  }
+]

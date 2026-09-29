@@ -1,0 +1,220 @@
+[
+  {
+    "id": "desp-01",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Cron diario para el usuario natasha",
+    "enunciado": "Configura una tarea programada con **cron** para el usuario `natasha` (ya existe en el sistema).\n\n- La tarea debe ejecutar el comando `/bin/echo hello`.\n- Debe ejecutarse **todos los días a las 14:23**.\n- La tarea debe pertenecer a `natasha`, no a `root`.",
+    "pistas": [
+      "Como root puedes editar el crontab de otro usuario con la opción -u.",
+      "El formato de cron tiene 5 campos: minuto hora día-del-mes mes día-de-la-semana.",
+      "Primero va el minuto (23) y luego la hora (14)."
+    ],
+    "solucion": "# Abre el crontab de natasha (como root)\ncrontab -e -u natasha\n\n# Añade esta línea, guarda y sal del editor:\n23 14 * * * /bin/echo hello\n\n# Asegúrate de que el servicio cron está activo y habilitado\nsystemctl enable --now crond",
+    "verificacion": "# Debe mostrar la línea programada\ncrontab -l -u natasha\n# El archivo se guarda en disco, así que sobrevive a un reinicio\ncat /var/spool/cron/natasha\nsystemctl is-enabled crond\nsystemctl is-active crond",
+    "explicacion": "Los 5 campos de cron son minuto, hora, día del mes, mes y día de la semana, así que `23 14 * * *` significa \"a las 14:23 todos los días\". El error típico es escribir `14 23` (al revés) o crear la tarea en el crontab de root en vez del de natasha."
+  },
+  {
+    "id": "desp-02",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "opcion",
+    "dificultad": "media",
+    "titulo": "Interpretar una línea de crontab",
+    "enunciado": "Encuentras esta línea en el crontab de un usuario:\n\n```\n*/15 9-17 * * 1-5 /usr/local/bin/revisar.sh\n```\n\n¿Cuándo se ejecuta `revisar.sh`?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "`*/15` en el campo de minutos significa \"cada 15 minutos\", `9-17` es el rango de horas (incluye toda la hora 17, así que la última ejecución es a las 17:45) y `1-5` en el quinto campo son los días de la semana de lunes a viernes. El tercer campo (día del mes) es `*`, así que no limita nada.",
+    "opciones": [
+      "Cada 15 minutos, entre las 9:00 y las 17:45, de lunes a viernes",
+      "A las 9:15 y a las 17:15, de lunes a viernes",
+      "Cada 15 horas, los días 9 a 17 de cada mes, de enero a mayo",
+      "Cada 15 minutos, entre las 9:00 y las 17:00, solo los días 1 a 5 de cada mes"
+    ],
+    "correcta": 0
+  },
+  {
+    "id": "desp-03",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Tarea única con at",
+    "enunciado": "Programa una tarea **de una sola vez** con `at` que, **hoy a las 23:45**, ejecute:\n\n```\n/usr/bin/tar czf /root/etc-backup.tar.gz /etc\n```\n\nEl servicio que ejecuta las tareas de `at` debe estar activo y habilitado al arranque. Si el paquete `at` no está instalado, instálalo.",
+    "pistas": [
+      "El paquete se llama at y el servicio se llama atd.",
+      "Puedes pasar el comando a at por una tubería: echo \"comando\" | at HORA",
+      "atq lista las tareas pendientes y at -c NUMERO muestra su contenido."
+    ],
+    "solucion": "# Instala at y activa el servicio atd\ndnf install -y at\nsystemctl enable --now atd\n\n# Programa la tarea para las 23:45 de hoy\necho \"/usr/bin/tar czf /root/etc-backup.tar.gz /etc\" | at 23:45",
+    "verificacion": "# Debe aparecer una tarea pendiente para hoy a las 23:45\natq\n# Muestra el contenido de la tarea (cambia 1 por el número que te dio atq)\nat -c 1 | tail -n 3\nsystemctl is-enabled atd\nsystemctl is-active atd",
+    "explicacion": "`at` sirve para tareas que se ejecutan **una sola vez**, mientras que cron sirve para tareas repetitivas. Si el servicio `atd` no está en marcha, la tarea queda en cola pero nunca se ejecuta. Para borrar una tarea pendiente usa `atrm NUMERO`."
+  },
+  {
+    "id": "desp-04",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "tarea",
+    "dificultad": "dificil",
+    "titulo": "Timer de systemd diario",
+    "enunciado": "Crea un **timer de systemd** llamado `latido.timer` que ejecute el servicio `latido.service` **todos los días a las 02:30**.\n\n- `latido.service` debe ejecutar: `/bin/bash -c 'date >> /var/log/latido.log'`\n- Si el equipo estaba apagado a las 02:30, la tarea debe ejecutarse en cuanto arranque.\n- El timer debe estar activo ahora y también después de reiniciar.\n- Guarda las dos unidades en `/etc/systemd/system/`.",
+    "pistas": [
+      "Necesitas dos archivos: latido.service (qué se ejecuta) y latido.timer (cuándo).",
+      "En el .timer usa OnCalendar= con el formato *-*-* HH:MM:SS y Persistent=true.",
+      "Se habilita el .timer, no el .service. No olvides systemctl daemon-reload."
+    ],
+    "solucion": "# 1) El servicio: qué se ejecuta\ncat > /etc/systemd/system/latido.service <<'EOF'\n[Unit]\nDescription=Escribe la fecha en /var/log/latido.log\n\n[Service]\nType=oneshot\nExecStart=/bin/bash -c 'date >> /var/log/latido.log'\nEOF\n\n# 2) El timer: cuándo se ejecuta\ncat > /etc/systemd/system/latido.timer <<'EOF'\n[Unit]\nDescription=Ejecuta latido.service cada día a las 02:30\n\n[Timer]\nOnCalendar=*-*-* 02:30:00\nPersistent=true\n\n[Install]\nWantedBy=timers.target\nEOF\n\n# 3) Recarga systemd y activa el timer ahora y al arranque\nsystemctl daemon-reload\nsystemctl enable --now latido.timer",
+    "verificacion": "# Debe aparecer latido.timer con la próxima ejecución a las 02:30\nsystemctl list-timers latido.timer\nsystemctl is-enabled latido.timer\nsystemctl is-active latido.timer\n# Comprueba que la expresión de calendario es válida\nsystemd-analyze calendar '*-*-* 02:30:00'\n# Prueba el servicio a mano y mira el log\nsystemctl start latido.service && tail -n 1 /var/log/latido.log",
+    "explicacion": "El `.timer` activa por defecto el `.service` con el mismo nombre. Se habilita el timer (con `WantedBy=timers.target`), no el servicio, porque el servicio solo debe correr cuando el timer lo dispara. `Persistent=true` hace que una ejecución perdida con el equipo apagado se lance al arrancar."
+  },
+  {
+    "id": "desp-05",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "opcion",
+    "dificultad": "media",
+    "titulo": "Activar un timer de systemd",
+    "enunciado": "Has creado `/etc/systemd/system/informe.service` y `/etc/systemd/system/informe.timer` (con `OnCalendar=weekly` y `WantedBy=timers.target`). Ya ejecutaste `systemctl daemon-reload`.\n\n¿Qué comando deja la tarea programada **ahora y después de cada reinicio**?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "Lo que se programa es el **timer**: `enable` lo deja activo tras reiniciar y `--now` lo arranca ya. Habilitar o arrancar el `.service` lo ejecutaría una vez de inmediato (y en cada arranque), que no es lo que se pide. `start` sin `enable` se pierde al reiniciar.",
+    "opciones": [
+      "systemctl enable --now informe.service",
+      "systemctl start informe.timer",
+      "systemctl enable --now informe.timer",
+      "systemctl enable informe.service && systemctl start informe.timer"
+    ],
+    "correcta": 2
+  },
+  {
+    "id": "desp-06",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Servidor web básico con httpd",
+    "enunciado": "Configura un servidor web en `servera`:\n\n1. Instala el paquete `httpd`.\n2. Crea el archivo `/var/www/html/index.html` con el texto exacto: `Bienvenido a servera`\n3. El servicio web debe estar en marcha y arrancar automáticamente al iniciar el sistema.\n4. El servidor debe ser accesible desde otras máquinas por HTTP (puerto 80) de forma permanente.",
+    "pistas": [
+      "El servicio se llama httpd y su contenido por defecto está en /var/www/html.",
+      "systemctl enable --now arranca y habilita en un solo paso.",
+      "Abre el servicio http en firewalld con --permanent y después recarga."
+    ],
+    "solucion": "# 1) Instala Apache\ndnf install -y httpd\n\n# 2) Crea la página principal\necho \"Bienvenido a servera\" > /var/www/html/index.html\n\n# 3) Arranca y habilita el servicio\nsystemctl enable --now httpd\n\n# 4) Abre HTTP en el firewall (permanente) y recarga\nfirewall-cmd --permanent --add-service=http\nfirewall-cmd --reload",
+    "verificacion": "# Debe devolver: Bienvenido a servera\ncurl http://localhost/\nsystemctl is-enabled httpd\nsystemctl is-active httpd\n# \"http\" debe aparecer en services, tanto en la config activa como en la permanente\nfirewall-cmd --list-services\nfirewall-cmd --permanent --list-services\n# Desde otra máquina (por ejemplo serverb):\n# curl http://servera/",
+    "explicacion": "Un archivo creado dentro de `/var/www/html` hereda el contexto SELinux correcto (`httpd_sys_content_t`). Si lo creas en otro sitio y lo mueves con `mv`, conserva el contexto antiguo y Apache devuelve \"403 Forbidden\": se arregla con `restorecon -Rv /var/www/html`."
+  },
+  {
+    "id": "desp-07",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "opcion",
+    "dificultad": "facil",
+    "titulo": "Arrancar frente a habilitar un servicio",
+    "enunciado": "Ejecutas `systemctl start chronyd` y compruebas que el servicio funciona. Después reinicias el equipo y ves que `chronyd` está detenido. ¿Por qué?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "`start`/`stop` actúan solo sobre el estado actual; `enable`/`disable` deciden si arranca en el próximo inicio. `systemctl enable --now` hace las dos cosas a la vez. Un servicio enmascarado ni siquiera se habría podido arrancar con `start`.",
+    "opciones": [
+      "Porque start solo lo arranca ahora; para que arranque al iniciar hace falta systemctl enable chronyd",
+      "Porque el servicio está enmascarado (masked); start no funciona con servicios enmascarados",
+      "Porque faltó ejecutar systemctl daemon-reload después de start",
+      "Porque chronyd solo arranca si el target por defecto es graphical.target"
+    ],
+    "correcta": 0
+  },
+  {
+    "id": "desp-08",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Arrancar en modo texto por defecto",
+    "enunciado": "Configura `servera` para que, **a partir del próximo arranque**, inicie siempre en modo texto multiusuario (sin entorno gráfico).\n\nNo hace falta que reinicies ahora ni que cambies el modo actual.",
+    "pistas": [
+      "El modo texto multiusuario es el target multi-user.target.",
+      "Busca los subcomandos get-default y set-default de systemctl."
+    ],
+    "solucion": "# Cambia el target por defecto\nsystemctl set-default multi-user.target\n\n# (Opcional) cambiar ya, sin reiniciar:\n# systemctl isolate multi-user.target",
+    "verificacion": "# Debe devolver: multi-user.target\nsystemctl get-default\n# El enlace simbólico que hace persistente el cambio\nls -l /etc/systemd/system/default.target",
+    "explicacion": "`set-default` cambia el enlace `/etc/systemd/system/default.target`, que es lo que se lee en cada arranque, así que el cambio es persistente. `systemctl isolate` cambia el modo solo en este momento y no afecta al siguiente arranque."
+  },
+  {
+    "id": "desp-09",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Cliente NTP con chrony y zona horaria",
+    "enunciado": "Configura la hora de `servera`:\n\n1. Debe sincronizar la hora **únicamente** con el servidor `ntp.lab.example.com` usando chrony (con la opción `iburst`).\n2. La zona horaria debe ser `America/Mexico_City`.\n3. La sincronización NTP debe quedar activada y el servicio de chrony debe arrancar al iniciar el sistema.",
+    "pistas": [
+      "La configuración de chrony está en /etc/chrony.conf; comenta las líneas pool o server que ya existan.",
+      "Después de editar, reinicia chronyd.",
+      "timedatectl tiene los subcomandos set-timezone y set-ntp."
+    ],
+    "solucion": "# 1) Comenta los servidores/pools existentes\nsed -i -E 's/^(pool|server) /#&/' /etc/chrony.conf\n\n# Añade el servidor del laboratorio\necho \"server ntp.lab.example.com iburst\" >> /etc/chrony.conf\n\n# Aplica los cambios y habilita el servicio\nsystemctl enable chronyd\nsystemctl restart chronyd\n\n# 2) Zona horaria (puedes buscarla con: timedatectl list-timezones | grep Mexico)\ntimedatectl set-timezone America/Mexico_City\n\n# 3) Activa la sincronización NTP\ntimedatectl set-ntp true",
+    "verificacion": "# Solo debe aparecer esta línea sin comentar\ngrep -E '^(server|pool)' /etc/chrony.conf\n# Debe listar ntp.lab.example.com (^* significa que ya está sincronizado con él)\nchronyc sources -v\n# Time zone: America/Mexico_City y NTP service: active\ntimedatectl\nsystemctl is-enabled chronyd",
+    "explicacion": "chrony lee `/etc/chrony.conf` solo al arrancar, por eso hay que reiniciar `chronyd` tras editarlo. `iburst` envía varias consultas al principio para sincronizar más rápido. En la salida de `chronyc sources`, `^*` indica el servidor con el que está sincronizado y `^?` que todavía no responde."
+  },
+  {
+    "id": "desp-10",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "tarea",
+    "dificultad": "media",
+    "titulo": "Configurar repositorios remotos",
+    "enunciado": "`servera` no tiene repositorios configurados. Crea el archivo `/etc/yum.repos.d/lab.repo` con dos repositorios:\n\n| id | URL |\n|---|---|\n| `lab-baseos` | `http://content.example.com/rhel10.0/x86_64/dnf/BaseOS` |\n| `lab-appstream` | `http://content.example.com/rhel10.0/x86_64/dnf/AppStream` |\n\nAmbos deben estar habilitados y comprobar la firma GPG con la clave `/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release`.\n\nDespués, instala el paquete `tmux` y actualiza el paquete `bash` a la última versión disponible en esos repositorios.",
+    "pistas": [
+      "Cada repositorio es una sección [id] con name, baseurl, enabled, gpgcheck y gpgkey.",
+      "La clave GPG local se indica con el prefijo file://",
+      "dnf repolist muestra los repositorios habilitados."
+    ],
+    "solucion": "# Crea el archivo de repositorios\ncat > /etc/yum.repos.d/lab.repo <<'EOF'\n[lab-baseos]\nname=Lab BaseOS\nbaseurl=http://content.example.com/rhel10.0/x86_64/dnf/BaseOS\nenabled=1\ngpgcheck=1\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release\n\n[lab-appstream]\nname=Lab AppStream\nbaseurl=http://content.example.com/rhel10.0/x86_64/dnf/AppStream\nenabled=1\ngpgcheck=1\ngpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release\nEOF\n\n# Limpia la caché y comprueba los repos\ndnf clean all\ndnf repolist\n\n# Instala tmux y actualiza bash\ndnf install -y tmux\ndnf upgrade -y bash",
+    "verificacion": "# Deben aparecer lab-baseos y lab-appstream\ndnf repolist\n# tmux instalado\nrpm -q tmux\n# \"From repo\" debe ser uno de los repos del laboratorio\ndnf info --installed tmux | grep -i repo\n# No debe quedar ninguna actualización pendiente de bash\ndnf check-update bash",
+    "explicacion": "dnf lee todos los archivos `.repo` de `/etc/yum.repos.d/`. Un error típico es escribir mal `baseurl` o poner `gpgkey=/etc/pki/...` sin `file://`. También podrías crear el repo con `dnf config-manager --add-repo URL`, pero luego tendrías que revisar el archivo generado para añadir la clave GPG."
+  },
+  {
+    "id": "desp-11",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "tarea",
+    "dificultad": "facil",
+    "titulo": "Instalar un paquete RPM local",
+    "enunciado": "En `/root` tienes el archivo `lab-tools-1.0-1.el10.noarch.rpm`. Instálalo de forma que **dnf resuelva automáticamente sus dependencias** desde los repositorios configurados.\n\nDespués, muestra la lista de archivos que instaló el paquete.",
+    "pistas": [
+      "dnf puede instalar un archivo .rpm local si le das la ruta (por ejemplo, empezando con ./).",
+      "rpm -ql muestra los archivos de un paquete instalado."
+    ],
+    "solucion": "cd /root\n# dnf instala el archivo local y descarga las dependencias de los repos\ndnf install -y ./lab-tools-1.0-1.el10.noarch.rpm\n\n# Lista los archivos del paquete\nrpm -ql lab-tools",
+    "verificacion": "# Debe mostrar lab-tools-1.0-1.el10.noarch\nrpm -q lab-tools\n# Queda registrado en el historial de dnf\ndnf history list lab-tools",
+    "explicacion": "Con `dnf install ./archivo.rpm` dnf trata el archivo local como un repositorio más y trae las dependencias que falten. Si usas `rpm -ivh`, la instalación falla cuando falta alguna dependencia. El `./` es importante: sin él, dnf buscaría un paquete con ese nombre en los repositorios."
+  },
+  {
+    "id": "desp-12",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "tarea",
+    "dificultad": "dificil",
+    "titulo": "Añadir parámetros al kernel con grubby",
+    "enunciado": "Añade los parámetros `audit=1 audit_backlog_limit=8192` a la línea de arranque de **todos** los kernels instalados en `servera`.\n\nAdemás, asegúrate de que el kernel que arranca por defecto es el más reciente instalado (el que está en `/boot/vmlinuz-*` con la versión más alta).\n\nEl cambio debe mantenerse después de reiniciar.",
+    "pistas": [
+      "grubby --update-kernel=ALL --args=\"...\" añade parámetros a todas las entradas.",
+      "grubby --info=ALL muestra los argumentos de cada kernel.",
+      "grubby --default-kernel muestra el kernel por defecto y --set-default lo cambia."
+    ],
+    "solucion": "# Añade los parámetros a todas las entradas de arranque\ngrubby --update-kernel=ALL --args=\"audit=1 audit_backlog_limit=8192\"\n\n# Mira qué kernels hay y cuál es el predeterminado\nls /boot/vmlinuz-*\ngrubby --default-kernel\n\n# Si no es el más reciente, fíjalo (ajusta la versión a la tuya)\ngrubby --set-default=/boot/vmlinuz-$(rpm -q --last kernel | head -n1 | sed 's/^kernel-//; s/ .*//')\n\n# Reinicia para aplicarlo\nreboot",
+    "verificacion": "# Todas las líneas args= deben incluir audit=1 audit_backlog_limit=8192\ngrubby --info=ALL | grep -E '^(kernel|args)'\n# Debe ser el kernel más reciente\ngrubby --default-kernel\n# Tras reiniciar, el kernel en ejecución debe tener los parámetros\ncat /proc/cmdline",
+    "explicacion": "En RHEL 10 las entradas de arranque son archivos BLS en `/boot/loader/entries/`, y `grubby` los modifica directamente, por eso el cambio es persistente. Para quitar un parámetro usa `--remove-args`. Los kernels que se instalen más adelante heredan los argumentos de `/etc/kernel/cmdline`, que grubby también actualiza al usar `ALL`."
+  },
+  {
+    "id": "desp-13",
+    "dominio": "despliegue-mantenimiento",
+    "tipo": "opcion",
+    "dificultad": "media",
+    "titulo": "Aplicar cambios de /etc/default/grub",
+    "enunciado": "Cambiaste `GRUB_TIMEOUT=5` por `GRUB_TIMEOUT=10` en `/etc/default/grub`. Al reiniciar, el menú de GRUB sigue esperando solo 5 segundos. ¿Qué te faltó ejecutar?",
+    "pistas": [],
+    "solucion": "",
+    "verificacion": "",
+    "explicacion": "GRUB no lee `/etc/default/grub` al arrancar: lee `/boot/grub2/grub.cfg`, que se regenera con `grub2-mkconfig`. En RHEL 10 esa ruta sirve tanto para BIOS como para UEFI. `grubby --args` cambia los parámetros del kernel, no el tiempo de espera; `dracut` regenera el initramfs y `grub2` no es un servicio.",
+    "opciones": [
+      "grubby --update-kernel=ALL --args=\"GRUB_TIMEOUT=10\"",
+      "grub2-mkconfig -o /boot/grub2/grub.cfg",
+      "dracut -f",
+      "systemctl restart grub2"
+    ],
+    "correcta": 1
+  }
+]

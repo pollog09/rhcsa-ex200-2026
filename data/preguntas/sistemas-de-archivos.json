@@ -1,0 +1,192 @@
+[
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "tarea",
+    "id": "fs-01",
+    "dificultad": "facil",
+    "titulo": "Crear y montar un sistema de archivos VFAT",
+    "enunciado": "En el disco vacío **/dev/vdb**:\n\n1. Crea una tabla GPT y una partición de **512 MiB**.\n2. Dale formato **VFAT** con la etiqueta **USBDATA**.\n3. Móntala en **/mnt/usb** de forma persistente usando su **UUID**.",
+    "pistas": [
+      "El disco puede llamarse vdb, sdb o nvme0n1 según la máquina; compruébalo con `lsblk`.",
+      "El comando es `mkfs.vfat` (paquete dosfstools). Con `-n` pones la etiqueta.",
+      "El UUID de un VFAT es corto, del estilo `1A2B-3C4D`. Cópialo de `blkid`."
+    ],
+    "solucion": "# Partición de 512 MiB\nparted -s /dev/vdb mklabel gpt\nparted -s /dev/vdb mkpart usb fat32 1MiB 513MiB\nudevadm settle\n# Si mkfs.vfat no existe: dnf install -y dosfstools\nmkfs.vfat -n USBDATA /dev/vdb1\nmkdir -p /mnt/usb\n# Entrada persistente por UUID\nblkid /dev/vdb1\necho \"UUID=$(blkid -s UUID -o value /dev/vdb1)  /mnt/usb  vfat  defaults  0 0\" >> /etc/fstab\nsystemctl daemon-reload\nmount -a",
+    "verificacion": "lsblk -f /dev/vdb        # vdb1 vfat, LABEL USBDATA\numount /mnt/usb && mount -a\nfindmnt /mnt/usb         # FSTYPE vfat\ntouch /mnt/usb/prueba && ls /mnt/usb\n# Reinicia y comprueba con findmnt /mnt/usb",
+    "explicacion": "VFAT no guarda propietarios ni permisos de Linux: todos los archivos aparecen con el dueño y los permisos que indiquen las opciones de montaje (por ejemplo `uid=`, `gid=` o `umask=`). Por eso `chmod` o `chown` dentro de /mnt/usb no tienen efecto."
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "tarea",
+    "id": "fs-02",
+    "dificultad": "facil",
+    "titulo": "Sistema de archivos ext4 persistente",
+    "enunciado": "La partición **/dev/vdb2** (1 GiB) ya existe y está vacía.\n\n1. Dale formato **ext4**.\n2. Móntala en **/srv/archivo**.\n3. El montaje debe mantenerse tras reiniciar (usa el UUID).",
+    "pistas": [
+      "Usa `mkfs.ext4`. Si la partición tenía un sistema de archivos anterior, te pedirá confirmación.",
+      "En fstab el tipo es `ext4`. Luego `systemctl daemon-reload` y `mount -a`."
+    ],
+    "solucion": "mkfs.ext4 /dev/vdb2\nmkdir -p /srv/archivo\necho \"UUID=$(blkid -s UUID -o value /dev/vdb2)  /srv/archivo  ext4  defaults  0 0\" >> /etc/fstab\nsystemctl daemon-reload\nmount -a",
+    "verificacion": "blkid /dev/vdb2             # TYPE=\"ext4\"\numount /srv/archivo && mount -a\nfindmnt /srv/archivo        # FSTYPE ext4\ndf -hT /srv/archivo\n# Reinicia (systemctl reboot) y vuelve a comprobar con findmnt",
+    "explicacion": "Probar con `umount` y `mount -a` es la forma rápida de detectar errores de fstab antes de reiniciar. Si `mount -a` falla, corrige la línea: un fstab roto puede dejar la máquina en modo de emergencia en el examen."
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "tarea",
+    "id": "fs-03",
+    "dificultad": "media",
+    "titulo": "Montar un recurso NFS de forma persistente",
+    "enunciado": "El servidor **servidor.lab.example.com** exporta el directorio **/exports/docs** por NFS.\n\n1. Comprueba qué recursos exporta el servidor.\n2. Monta **servidor.lab.example.com:/exports/docs** en **/mnt/docs**.\n3. El montaje debe ser persistente y esperar a que la red esté disponible al arrancar.",
+    "pistas": [
+      "Necesitas el paquete `nfs-utils`. `showmount -e <servidor>` lista las exportaciones (si el servidor solo usa NFSv4 puede no responder; entonces prueba a montar directamente).",
+      "El tipo de sistema de archivos es `nfs`.",
+      "La opción `_netdev` en fstab indica que es un dispositivo de red."
+    ],
+    "solucion": "dnf install -y nfs-utils\n# Ver exportaciones\nshowmount -e servidor.lab.example.com\nmkdir -p /mnt/docs\n# Prueba manual\nmount -t nfs servidor.lab.example.com:/exports/docs /mnt/docs\numount /mnt/docs\n# Entrada persistente en /etc/fstab\necho \"servidor.lab.example.com:/exports/docs  /mnt/docs  nfs  defaults,_netdev  0 0\" >> /etc/fstab\nsystemctl daemon-reload\nmount -a",
+    "verificacion": "findmnt /mnt/docs          # FSTYPE nfs4, SOURCE servidor.lab.example.com:/exports/docs\numount /mnt/docs && mount -a && findmnt /mnt/docs\nls /mnt/docs\n# Reinicia y confirma que se monta solo: findmnt /mnt/docs",
+    "explicacion": "Con `_netdev` systemd espera a la red antes de montar, así el arranque no falla. `findmnt` mostrará `nfs4` porque RHEL negocia NFSv4 por defecto aunque en fstab pongas `nfs`."
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "tarea",
+    "id": "fs-04",
+    "dificultad": "dificil",
+    "titulo": "autofs para los homes de usuarios LDAP",
+    "enunciado": "Los usuarios LDAP (por ejemplo **ldapuser01**) tienen su directorio personal en **/home/guests/<usuario>**, pero esos directorios están en el servidor NFS **servidor.lab.example.com**, que exporta **/home/guests/<usuario>**.\n\nConfigura **autofs** para que, cuando un usuario LDAP acceda a su home, se monte automáticamente **servidor.lab.example.com:/home/guests/<usuario>** en **/home/guests/<usuario>**, con permisos de lectura y escritura. Debe funcionar tras reiniciar.",
+    "pistas": [
+      "Instala `autofs` y crea un archivo terminado en `.autofs` dentro de /etc/auto.master.d/ que apunte a un mapa, por ejemplo /etc/auto.guests.",
+      "En un mapa indirecto el asterisco `*` significa \"cualquier nombre\" y `&` se sustituye por ese mismo nombre.",
+      "No crees tú el directorio /home/guests ni los subdirectorios: autofs los gestiona."
+    ],
+    "solucion": "dnf install -y autofs nfs-utils\n# Mapa maestro: punto de montaje base y archivo de mapa\necho \"/home/guests  /etc/auto.guests\" > /etc/auto.master.d/guests.autofs\n# Mapa indirecto con comodín: cualquier usuario -> su directorio remoto\necho \"*  -rw,sync  servidor.lab.example.com:/home/guests/&\" > /etc/auto.guests\n# Activar y arrancar el servicio\nsystemctl enable --now autofs\n# Si ya estaba arrancado: systemctl restart autofs",
+    "verificacion": "systemctl is-enabled autofs     # enabled\nsystemctl is-active autofs      # active\ngetent passwd ldapuser01        # home: /home/guests/ldapuser01\nsu - ldapuser01 -c pwd          # /home/guests/ldapuser01, sin \"No directory\"\nfindmnt /home/guests/ldapuser01 # FSTYPE nfs4\ntouch /home/guests/ldapuser01/prueba   # como ldapuser01, para comprobar rw\n# Reinicia y repite su - ldapuser01 para comprobar la persistencia",
+    "explicacion": "autofs monta el directorio solo cuando alguien accede a él y lo desmonta tras un tiempo sin uso, por eso `ls /home/guests` puede aparecer vacío: hay que acceder a la ruta completa. El error típico es olvidar `enable` (tras reiniciar no funciona) o escribir la ruta remota sin `&`."
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "tarea",
+    "id": "fs-05",
+    "dificultad": "media",
+    "titulo": "Mapa indirecto de autofs para un recurso",
+    "enunciado": "El servidor **servidor.lab.example.com** exporta **/exports/proyectos** por NFS.\n\nConfigura **autofs** para que al acceder a **/shares/proyectos** se monte ese recurso automáticamente, en modo **solo lectura**. Usa un mapa indirecto con base **/shares** y el archivo de mapa **/etc/auto.shares**. Debe funcionar tras reiniciar.",
+    "pistas": [
+      "El mapa maestro va en /etc/auto.master.d/shares.autofs con la línea `/shares /etc/auto.shares`.",
+      "En el mapa, la clave es `proyectos` y las opciones `-ro`.",
+      "Tras cambiar los mapas, reinicia autofs."
+    ],
+    "solucion": "dnf install -y autofs nfs-utils\necho \"/shares  /etc/auto.shares\" > /etc/auto.master.d/shares.autofs\necho \"proyectos  -ro,sync  servidor.lab.example.com:/exports/proyectos\" > /etc/auto.shares\nsystemctl enable --now autofs\nsystemctl restart autofs",
+    "verificacion": "ls /shares/proyectos          # dispara el montaje y muestra el contenido\nfindmnt /shares/proyectos     # FSTYPE nfs4, opciones ro\ntouch /shares/proyectos/x     # debe fallar: Read-only file system\nsystemctl is-enabled autofs   # enabled\n# Reinicia y vuelve a ejecutar ls /shares/proyectos",
+    "explicacion": "En un mapa indirecto, autofs crea /shares y dentro monta cada clave del mapa bajo demanda. No añadas este recurso a /etc/fstab: autofs y fstab no deben gestionar el mismo punto de montaje."
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "tarea",
+    "id": "fs-06",
+    "dificultad": "media",
+    "titulo": "Extender un LV con XFS en caliente",
+    "enunciado": "El volumen lógico **/dev/datavg/datalv** tiene un sistema de archivos **XFS** montado en **/data** y se está quedando sin espacio.\n\nAmplíalo hasta **1200 MiB** en total, **sin desmontarlo** y sin perder datos. El sistema de archivos también debe crecer. (datavg tiene al menos 1 GiB libre; si no, añade antes un PV con `vgextend`.)",
+    "pistas": [
+      "Comprueba el espacio libre con `vgs datavg`.",
+      "`lvextend -r` amplía el LV y además el sistema de archivos en un solo paso.",
+      "`-L 1200M` fija el tamaño total; `-L +1200M` sumaría 1200 MiB al tamaño actual."
+    ],
+    "solucion": "vgs datavg\ndf -h /data\n# Ampliar LV y sistema de archivos a la vez\nlvextend -r -L 1200M /dev/datavg/datalv\n# Alternativa en dos pasos:\n#   lvextend -L 1200M /dev/datavg/datalv\n#   xfs_growfs /data",
+    "verificacion": "lvs /dev/datavg/datalv      # LSize 1.17g (1200 MiB)\ndf -h /data                 # el tamaño ha crecido\nls /data                    # los datos siguen ahí\n# El tamaño queda guardado en disco; tras reiniciar df -h /data debe mostrar lo mismo",
+    "explicacion": "Si solo ejecutas `lvextend` sin `-r`, el LV crece pero `df` sigue mostrando el tamaño viejo, porque el sistema de archivos no se ha ampliado. XFS se amplía montado con `xfs_growfs`, pero no se puede reducir nunca."
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "opcion",
+    "solucion": "",
+    "verificacion": "",
+    "id": "fs-07",
+    "dificultad": "media",
+    "titulo": "LV ampliado pero df muestra el tamaño viejo",
+    "enunciado": "Ejecutaste `lvextend -L +500M /dev/datavg/datalv`. El LV tiene sistema de archivos **XFS** montado en **/data**, pero `df -h /data` sigue mostrando el tamaño anterior. ¿Qué comando lo soluciona?",
+    "pistas": [
+      "Cada tipo de sistema de archivos tiene su propia herramienta para crecer."
+    ],
+    "opciones": [
+      "resize2fs /dev/datavg/datalv",
+      "xfs_growfs /data",
+      "mount -o remount /data",
+      "xfs_repair /dev/datavg/datalv"
+    ],
+    "correcta": 1,
+    "explicacion": "`xfs_growfs` amplía un XFS montado hasta ocupar todo el LV (recibe el punto de montaje). `resize2fs` es para ext2/3/4; remontar no cambia el tamaño; y `xfs_repair` sirve para reparar, no para crecer. Para evitarlo, usa `lvextend -r`, que funciona tanto con XFS como con ext4."
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "tarea",
+    "id": "fs-08",
+    "dificultad": "media",
+    "titulo": "Directorio colaborativo con SGID y sticky bit",
+    "enunciado": "Crea el directorio **/proyectos/ventas** con estas condiciones:\n\n- Pertenece al grupo **ventas** (créalo si no existe) y su propietario es root.\n- Los miembros de ventas pueden crear y leer archivos en él; el resto de usuarios no tiene ningún acceso.\n- Los archivos nuevos creados dentro deben pertenecer automáticamente al grupo **ventas**.\n- Un usuario no puede borrar archivos de otros usuarios en ese directorio.",
+    "pistas": [
+      "El bit SGID en un directorio hace que los archivos nuevos hereden el grupo del directorio.",
+      "El sticky bit impide borrar archivos ajenos (como en /tmp).",
+      "En octal: SGID = 2, sticky = 1. Suma los bits especiales en la primera cifra."
+    ],
+    "solucion": "groupadd ventas 2>/dev/null   # si ya existe, no pasa nada\nmkdir -p /proyectos/ventas\nchown root:ventas /proyectos/ventas\n# 3 = SGID (2) + sticky (1); 770 = rwx dueño y grupo, nada para otros\nchmod 3770 /proyectos/ventas\n# Equivalente simbólico: chmod u=rwx,g=rwxs,o=-,+t /proyectos/ventas",
+    "verificacion": "ls -ld /proyectos/ventas     # drwxrws--T. root ventas\n# Prueba con un usuario miembro de ventas (por ejemplo, tras: usermod -aG ventas natasha)\nsu - natasha -c 'touch /proyectos/ventas/f1 && ls -l /proyectos/ventas/f1'   # grupo ventas\n# Los permisos se guardan en el sistema de archivos: persisten tras reiniciar",
+    "explicacion": "La `s` en el grupo indica SGID y la `T` mayúscula indica sticky sin permiso de ejecución para otros. Un error típico es hacer después `chmod 770`, que quita el sticky bit; usa siempre los 4 dígitos (3770). Recuerda que un usuario recién añadido al grupo debe volver a iniciar sesión."
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "tarea",
+    "id": "fs-09",
+    "dificultad": "media",
+    "titulo": "Permisos finos con ACL",
+    "enunciado": "Copia **/etc/fstab** en **/var/tmp/fstab** (propietario root:root). Después:\n\n1. El usuario **natasha** debe poder leer y escribir **/var/tmp/fstab**.\n2. El usuario **harry** no debe poder ni leer ni escribir el archivo.\n3. Los demás usuarios deben seguir pudiendo leerlo.\n4. Además, en el directorio **/srv/informes**, todos los archivos que se creen en el futuro deben ser legibles por el grupo **auditores**.\n\nNo cambies el propietario ni el grupo de los archivos.",
+    "pistas": [
+      "Usa `setfacl -m u:<usuario>:<permisos>` para cada usuario.",
+      "Para negar todo a un usuario concreto, dale los permisos `---`.",
+      "Las ACL por defecto de un directorio se ponen con `d:` delante, por ejemplo `d:g:auditores:rX`."
+    ],
+    "solucion": "cp /etc/fstab /var/tmp/fstab\nchown root:root /var/tmp/fstab\n# ACL de usuario\nsetfacl -m u:natasha:rw- /var/tmp/fstab\nsetfacl -m u:harry:--- /var/tmp/fstab\n# Directorio con ACL por defecto (y también para lo que ya existe)\nmkdir -p /srv/informes\ngroupadd auditores 2>/dev/null\nsetfacl -m g:auditores:rX /srv/informes\nsetfacl -m d:g:auditores:rX /srv/informes",
+    "verificacion": "getfacl /var/tmp/fstab     # user:natasha:rw-  user:harry:---  other::r--\nls -l /var/tmp/fstab       # aparece un \"+\" al final de los permisos\nsu - harry -c 'cat /var/tmp/fstab'      # Permission denied\nsu - natasha -c 'echo \"# prueba\" >> /var/tmp/fstab'   # funciona\ntouch /srv/informes/nuevo && getfacl /srv/informes/nuevo   # group:auditores:r--\n# Las ACL se guardan en el sistema de archivos y persisten tras reiniciar",
+    "explicacion": "Las ACL se evalúan antes que \"otros\", por eso harry queda bloqueado aunque el resto pueda leer. La `X` mayúscula da ejecución solo a directorios. Si `getfacl` muestra `#effective:` distinto de lo esperado, revisa la máscara (`m::`), que limita los permisos de las ACL."
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "opcion",
+    "solucion": "",
+    "verificacion": "",
+    "id": "fs-10",
+    "dificultad": "facil",
+    "titulo": "Un miembro del grupo no puede entrar al directorio",
+    "enunciado": "El directorio **/compartido** tiene estos permisos:\n\n```\ndrw-rw-r--. 2 root equipo 6 ene 10 10:00 /compartido\n```\n\nEl usuario **ana**, miembro del grupo **equipo**, obtiene \"Permission denied\" al hacer `cd /compartido`. ¿Qué cambio mínimo lo soluciona para los miembros del grupo?",
+    "pistas": [
+      "Para entrar en un directorio se necesita un permiso concreto que aquí falta."
+    ],
+    "opciones": [
+      "chmod g+r /compartido",
+      "chmod o+w /compartido",
+      "chmod g+x /compartido",
+      "chmod +t /compartido"
+    ],
+    "correcta": 2,
+    "explicacion": "En un directorio, `x` permite entrar y acceder a su contenido; `r` solo permite listar nombres. El grupo ya tiene `r`, dar escritura a otros sería inseguro y el sticky bit solo controla quién puede borrar archivos."
+  },
+  {
+    "dominio": "sistemas-de-archivos",
+    "tipo": "opcion",
+    "solucion": "",
+    "verificacion": "",
+    "id": "fs-11",
+    "dificultad": "media",
+    "titulo": "Efecto de la umask 027",
+    "enunciado": "El usuario **daniel** tiene configurada la umask **027**. ¿Qué permisos tendrán un archivo y un directorio nuevos creados por él?",
+    "pistas": [
+      "Los archivos parten de 666 y los directorios de 777; la umask quita bits."
+    ],
+    "opciones": [
+      "Archivo 640 (rw-r-----) y directorio 750 (rwxr-x---)",
+      "Archivo 750 (rwxr-x---) y directorio 750 (rwxr-x---)",
+      "Archivo 027 (-----w-rwx) y directorio 027 (----w-rwx)",
+      "Archivo 644 (rw-r--r--) y directorio 755 (rwxr-xr-x)"
+    ],
+    "correcta": 0,
+    "explicacion": "666 menos 027 da 640 para archivos, y 777 menos 027 da 750 para directorios (los archivos nunca reciben `x` por la umask). Para que sea persistente para un usuario, añade `umask 027` a su ~/.bashrc; `umask` sin argumentos muestra el valor actual."
+  }
+]
