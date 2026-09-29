@@ -27,7 +27,7 @@
       "Reactiva la conexión para aplicar los cambios."
     ],
     "solucion": "nmcli con mod eth0 ipv6.method manual \\\n  ipv6.addresses fd00:25:250::10/64 \\\n  ipv6.gateway fd00:25:250::254\n\nnmcli con up eth0",
-    "verificacion": "# Debe aparecer fd00:25:250::10/64\nip -6 addr show eth0\n# Ruta por defecto IPv6\nip -6 route | grep default\n# La IPv4 debe seguir igual\nip -4 addr show eth0\nnmcli -f ipv6.method,ipv6.addresses,ipv6.gateway con show eth0\n# Si la puerta de enlace responde:\nping -6 -c 2 fd00:25:250::254",
+    "verificacion": "# Debe aparecer fd00:25:250::10/64\nip -6 addr show eth0\n# Ruta por defecto IPv6\nip -6 route | grep default\n# La IPv4 debe seguir igual\nip -4 addr show eth0\nnmcli -f ipv6.method,ipv6.addresses,ipv6.gateway con show eth0\n# Guardado en el keyfile (persistente)\ngrep -A4 '^\\[ipv6\\]' /etc/NetworkManager/system-connections/eth0.nmconnection\n# Si la puerta de enlace responde:\nping -6 -c 2 fd00:25:250::254",
     "explicacion": "IPv4 e IPv6 se configuran por separado en la misma conexión, así que cambiar `ipv6.*` no afecta a `ipv4.*`. Con `ipv6.method manual` la conexión usa solo la dirección que indicas, además de la dirección de enlace local `fe80::`, que siempre existe."
   },
   {
@@ -42,7 +42,7 @@
       "Puedes indicar ipv4.method e ipv4.addresses en el mismo comando."
     ],
     "solucion": "nmcli con add con-name interna type ethernet ifname eth1 \\\n  ipv4.method manual ipv4.addresses 192.168.50.10/24 \\\n  ipv6.method disabled \\\n  connection.autoconnect yes\n\nnmcli con up interna",
-    "verificacion": "# La conexión interna debe estar activa sobre eth1\nnmcli con show --active\nip -4 addr show eth1\nnmcli -f connection.autoconnect,ipv4.addresses con show interna\nls /etc/NetworkManager/system-connections/",
+    "verificacion": "# La conexión interna debe estar activa sobre eth1\nnmcli con show --active\nip -4 addr show eth1\nnmcli -f connection.autoconnect,ipv4.addresses con show interna\n# Keyfile creado (en RHEL 10 no hay archivos ifcfg)\nls /etc/NetworkManager/system-connections/interna.nmconnection",
     "explicacion": "Una \"conexión\" es un perfil de configuración y un \"dispositivo\" es la interfaz física. Puedes tener varios perfiles para un mismo dispositivo, pero solo uno activo a la vez. Aquí no se pone puerta de enlace porque la ruta por defecto ya la da `eth0`; tener dos puertas de enlace por defecto suele causar problemas."
   },
   {
@@ -57,7 +57,7 @@
       "Formato: IP nombre-completo alias"
     ],
     "solucion": "# Añade la entrada al final de /etc/hosts\necho \"172.25.250.11   serverb.lab.example.com   serverb\" >> /etc/hosts",
-    "verificacion": "# Ambos deben devolver 172.25.250.11\ngetent hosts serverb.lab.example.com\ngetent hosts serverb\nping -c 2 serverb",
+    "verificacion": "# Ambos deben devolver 172.25.250.11\ngetent hosts serverb.lab.example.com\ngetent hosts serverb\nping -c 2 serverb\n# /etc/hosts es un archivo en disco: sobrevive al reinicio\ngrep serverb /etc/hosts",
     "explicacion": "El orden de búsqueda está en `/etc/nsswitch.conf` (línea `hosts: files dns ...`), por eso `/etc/hosts` (files) tiene prioridad sobre el DNS. Usa `getent hosts` para probar, porque `dig` y `nslookup` consultan solo el DNS e ignoran `/etc/hosts`."
   },
   {
@@ -111,7 +111,7 @@
       "firewall-cmd --list-all muestra la zona completa."
     ],
     "solucion": "firewall-cmd --permanent --zone=public --add-service=https\nfirewall-cmd --permanent --zone=public --add-port=8080/tcp\nfirewall-cmd --reload",
-    "verificacion": "# Configuración activa\nfirewall-cmd --zone=public --list-all\n# Configuración permanente (la que sobrevive al reinicio)\nfirewall-cmd --permanent --zone=public --list-services\nfirewall-cmd --permanent --zone=public --list-ports\nsystemctl is-enabled firewalld",
+    "verificacion": "# Configuración activa\nfirewall-cmd --zone=public --list-all\n# Configuración permanente (la que sobrevive al reinicio)\nfirewall-cmd --permanent --zone=public --list-services\nfirewall-cmd --permanent --zone=public --list-ports\nsystemctl is-enabled firewalld\n# Tras un reinicio (o --reload) las reglas deben seguir ahí",
     "explicacion": "Con `--permanent` la regla se guarda en disco pero no se aplica hasta `--reload`; sin `--permanent` se aplica al momento pero se pierde al recargar o reiniciar. Otra opción es aplicar la regla sin `--permanent` y después ejecutar `firewall-cmd --runtime-to-permanent`."
   },
   {

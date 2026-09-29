@@ -28,4 +28,4 @@ Versión completa, con comandos y ejercicios, en el sitio (`/temas`).
 
 ## Fuera del examen RHEL 10
 
-Aparecen en el curso, pero **ya no son objetivos del EX200**: Stratis, VDO, Podman/contenedores, Samba y FTP.
+Aparecen en cursos o guías de versiones anteriores, pero **no son objetivos del EX200 en RHEL 10**: Stratis, VDO, Podman/contenedores, Samba y FTP. Apache (httpd) solo sale como servicio de ejemplo para practicar firewall, SELinux y servicios.

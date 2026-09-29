@@ -33,7 +33,7 @@ grep root /etc/passwd          # líneas que contienen "root"
 grep -i error /var/log/messages   # sin distinguir mayúsculas
 grep -v '^#' /etc/ssh/sshd_config # quita líneas que empiezan con #
 grep -E '^(ana|luis):' /etc/passwd  # regex extendida
-grep -r 'Listen' /etc/httpd/   # busca dentro de una carpeta
+grep -r 'PermitRootLogin' /etc/ssh/   # busca dentro de una carpeta
 ```
 
 ### Archivos y carpetas
@@ -63,8 +63,10 @@ ls -li /datos                         # muestra el inodo y el contador de enlace
 tar -czf /root/etc.tar.gz /etc        # empaqueta y comprime con gzip
 tar -cjf /root/etc.tar.bz2 /etc       # igual, con bzip2
 tar -tf /root/etc.tar.gz              # lista el contenido sin extraer
-tar -xzf /root/etc.tar.gz -C /tmp/r   # extrae en otra carpeta
-gzip archivo ; gunzip archivo.gz      # comprimir y descomprimir un archivo
+tar -xzf /root/etc.tar.gz -C /tmp/r   # extrae en otra carpeta (la carpeta debe existir)
+tar -xjf /root/etc.tar.bz2 -C /tmp/r  # extrae un .tar.bz2 (tar -xf también detecta la compresión)
+gzip archivo ; gunzip archivo.gz      # comprime y descomprime (reemplaza el original)
+bzip2 archivo ; bunzip2 archivo.bz2   # igual con bzip2 (también bzip2 -d)
 ```
 
 ### Permisos ugo/rwx
@@ -80,7 +82,9 @@ chown ana:ventas archivo       # cambia dueño y grupo
 
 ```bash
 ssh ana@servidor1              # sesión remota
-su - ana                       # cambia a ana con su entorno
+su - ana                       # cambia a ana con SU entorno (shell de login, va a su home)
+su ana                         # cambia a ana pero conserva tu entorno y tu carpeta actual
+exit                           # vuelve al usuario anterior
 vim archivo                    # i para escribir, Esc, :wq para guardar y salir
 ```
 
@@ -88,8 +92,10 @@ vim archivo                    # i para escribir, Esc, :wq para guardar y salir
 
 ```bash
 man tar                        # manual; / busca, q sale
-man -k partition               # busca páginas por palabra clave
-info coreutils                 # documentación en formato info
+man -k partition               # busca páginas por palabra clave (igual que apropos)
+mandb                          # regenera el índice si man -k no encuentra nada
+man 5 passwd                   # sección 5: formato de archivos; la 1 es comandos, la 8 administración
+info coreutils                 # documentación en formato info (n/p navegan, q sale)
 ls /usr/share/doc/             # ejemplos y documentación de paquetes
 ```
 
@@ -104,6 +110,7 @@ ls /usr/share/doc/             # ejemplos y documentación de paquetes
 
 - Usar `>` cuando pedían agregar: borra lo que había. Para sumar usa `>>`.
 - Olvidar `-r` al copiar o borrar carpetas.
+- Usar `su` sin guion cuando piden el entorno del otro usuario: sigues con tu PATH y tu carpeta.
 - Confundir el orden en `ln -s`: primero el destino real, después el nombre del enlace.
 - Extraer un `.tar.bz2` con `-z`: la letra tiene que coincidir con la compresión (o deja que `tar -xf` la detecte).
 - Crear el archivo pedido con otro nombre o en otra ruta: el corrector revisa la ruta exacta.

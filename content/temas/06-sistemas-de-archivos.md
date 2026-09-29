@@ -18,9 +18,9 @@ SGID, sticky bit y ACL son reglas extra en la puerta: quién hereda el grupo, qu
 ### Crear y montar sistemas de archivos
 
 ```bash
-mkfs.xfs /dev/vdb1                  # XFS, el predeterminado en RHEL
+mkfs.xfs /dev/vdb1                  # XFS, el predeterminado (mínimo ~300 MiB)
 mkfs.ext4 -L backup /dev/vdb2       # ext4 con etiqueta
-dnf install -y dosfstools ; mkfs.vfat /dev/vdb3   # VFAT
+mkfs.vfat -n USB /dev/vdb3          # VFAT (paquete dosfstools, de BaseOS)
 mount /dev/vdb1 /mnt/xfs            # montaje manual
 # en /etc/fstab:  UUID=...  /mnt/fat  vfat  defaults  0 0
 ```
@@ -38,7 +38,7 @@ vgextend vgdatos /dev/vdc1                  # si el VG no tiene espacio
 
 ```bash
 dnf install -y nfs-utils
-showmount -e servidor.ejemplo.com           # qué exporta el servidor
+showmount -e servidor.ejemplo.com           # qué exporta (usa NFSv3; con NFSv4 puro puede fallar)
 mkdir /mnt/nfs
 mount -t nfs servidor.ejemplo.com:/export /mnt/nfs
 # en /etc/fstab:
@@ -52,7 +52,7 @@ dnf install -y autofs
 vim /etc/auto.master.d/remoto.autofs
 # /remoto   /etc/auto.remoto
 vim /etc/auto.remoto
-# compartido   -rw,sync   servidor.ejemplo.com:/export
+# compartido   -fstype=nfs4,rw   servidor.ejemplo.com:/export
 systemctl enable --now autofs
 ls /remoto/compartido                        # se monta al entrar
 ```
@@ -80,7 +80,7 @@ setfacl -x u:ana /srv/informe.txt      # quitar la entrada
 
 ### Fuera del examen RHEL 10
 
-Samba, FTP y los contenedores con Podman se practican en el curso, pero están fuera del examen RHEL 10.
+Samba, FTP y los contenedores con Podman aparecen en guías de versiones anteriores, pero están fuera del examen RHEL 10.
 
 ## Así lo piden en el examen
 
@@ -93,6 +93,7 @@ Samba, FTP y los contenedores con Podman se practican en el curso, pero están f
 
 - Olvidar `-r` en `lvextend`: el LV crece pero el sistema de archivos no.
 - Intentar achicar XFS: no se puede.
+- Crear un XFS de menos de 300 MiB: `mkfs.xfs` de RHEL 10 lo rechaza. Usa ext4 o un tamaño mayor.
 - Olvidar `_netdev` en NFS dentro de fstab o no habilitar `autofs` al arranque.
 - Crear la carpeta del punto de autofs a mano: autofs la gestiona solo.
 - Poner SGID en un archivo en vez de en la carpeta.

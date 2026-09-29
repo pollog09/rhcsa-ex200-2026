@@ -52,15 +52,16 @@
     "dominio": "herramientas-esenciales",
     "tipo": "tarea",
     "dificultad": "facil",
-    "titulo": "Crear y extraer un archivo tar.xz",
-    "enunciado": "1. Crea el archivo **/root/etc-config.tar.xz** con el contenido del directorio **/etc/ssh**, usando compresión **xz**.\n2. Extrae ese archivo dentro del directorio **/tmp/restaurado** (créalo si no existe).\n\nAl final debe existir el archivo /tmp/restaurado/etc/ssh/sshd_config.",
+    "titulo": "Comprimir y descomprimir con gzip y bzip2",
+    "enunciado": "1. Crea el archivo **/root/sysconfig.tar.gz** con el contenido del directorio **/etc/sysconfig**, usando compresión **gzip**.\n2. Extrae ese archivo dentro de **/tmp/gz** (créalo si no existe). Al final debe existir /tmp/gz/etc/sysconfig.\n3. Copia **/etc/services** a **/root/services**, comprímelo con **bzip2** y luego descomprímelo otra vez. Al final debe existir /root/services y **no** /root/services.bz2.",
     "pistas": [
-      "La opción de tar para xz es -J (mayúscula).",
-      "Para extraer en otro directorio usa la opción -C."
+      "En tar, -z usa gzip y -j usa bzip2; -c crea, -x extrae y -f indica el archivo.",
+      "Para extraer en otra carpeta usa -C (la carpeta debe existir).",
+      "bzip2 reemplaza el archivo por archivo.bz2; bunzip2 (o bzip2 -d) hace lo contrario."
     ],
-    "solucion": "# Crear el archivo con compresión xz\ntar -cJf /root/etc-config.tar.xz /etc/ssh\n\n# Crear el destino y extraer allí\nmkdir -p /tmp/restaurado\ntar -xJf /root/etc-config.tar.xz -C /tmp/restaurado",
-    "verificacion": "# Debe indicar \"XZ compressed data\"\nfile /root/etc-config.tar.xz\n\n# Debe existir el archivo extraído\nls -l /tmp/restaurado/etc/ssh/sshd_config",
-    "explicacion": "Con -C tar cambia al directorio indicado antes de extraer. Error típico: confundir -j (bzip2) con -J (xz). Al extraer, tar moderno detecta la compresión solo, así que -xf también funcionaría."
+    "solucion": "# 1. Empaquetar y comprimir con gzip\ntar -czf /root/sysconfig.tar.gz /etc/sysconfig\n\n# 2. Crear el destino y extraer allí\nmkdir -p /tmp/gz\ntar -xzf /root/sysconfig.tar.gz -C /tmp/gz\n\n# 3. Comprimir y descomprimir un archivo suelto con bzip2\ncp /etc/services /root/services\nbzip2 /root/services          # crea /root/services.bz2 y borra el original\nbunzip2 /root/services.bz2    # vuelve a dejar /root/services",
+    "verificacion": "# Debe indicar \"gzip compressed data\"\nfile /root/sysconfig.tar.gz\ntar -tzf /root/sysconfig.tar.gz | head -3   # rutas etc/sysconfig/...\n\n# Debe existir el directorio extraído\nls -ld /tmp/gz/etc/sysconfig\n\n# services existe, services.bz2 no, y el contenido es idéntico al original\nls -l /root/services /root/services.bz2\ncmp /etc/services /root/services && echo iguales",
+    "explicacion": "gzip y bzip2 comprimen un solo archivo y lo reemplazan por la versión .gz o .bz2; gunzip y bunzip2 lo revierten (usa -k si quieres conservar el original). Para carpetas se usa tar con -z (gzip) o -j (bzip2). Al extraer, tar -xf detecta la compresión solo, pero si pones la letra debe coincidir."
   },
   {
     "id": "herr-05",
@@ -196,21 +197,18 @@
   {
     "id": "herr-13",
     "dominio": "herramientas-esenciales",
-    "tipo": "opcion",
+    "tipo": "tarea",
     "dificultad": "media",
-    "titulo": "Permisos en notación octal",
-    "enunciado": "Ejecutas `chmod 754 script.sh`. ¿Qué permisos quedan?",
-    "pistas": [],
-    "solucion": "",
-    "verificacion": "",
-    "explicacion": "7 = 4+2+1 (rwx) para el propietario, 5 = 4+1 (r-x) para el grupo y 4 = r-- para otros. Por eso el resultado es rwxr-xr--.",
-    "opciones": [
-      "rwxr-xr--",
-      "rwxrw-r--",
-      "rw-r-xr--",
-      "rwxr--r-x"
+    "titulo": "Usar man, mandb y /usr/share/doc",
+    "enunciado": "Sin usar internet:\n\n1. Guarda en **/root/man-password.txt** la lista de páginas de manual cuya descripción contenga la palabra **password**. Si el comando no devuelve nada, regenera primero el índice del manual.\n2. Averigua en qué **sección** del manual se describe el **formato del archivo** /etc/passwd y guarda solo ese número en **/root/seccion.txt**.\n3. Guarda en **/root/docs-openssh.txt** la lista de archivos de documentación que el paquete **openssh** instaló en /usr/share/doc.",
+    "pistas": [
+      "man -k (o apropos) busca por palabra clave en los nombres y descripciones.",
+      "Si man -k responde \"nothing appropriate\", ejecuta mandb como root.",
+      "rpm -qd lista los archivos de documentación de un paquete; también puedes mirar con ls /usr/share/doc/openssh."
     ],
-    "correcta": 0
+    "solucion": "# 1. Buscar por palabra clave (si sale vacío, regenerar el índice con mandb)\nmandb\nman -k password > /root/man-password.txt\n\n# 2. passwd aparece en la sección 1 (comando) y en la 5 (formato de archivo)\nman -k passwd | grep '^passwd'\necho 5 > /root/seccion.txt\nman 5 passwd          # compruébalo leyendo la página\n\n# 3. Documentación del paquete en /usr/share/doc\nrpm -qd openssh > /root/docs-openssh.txt",
+    "verificacion": "# Debe tener varias líneas, por ejemplo chpasswd (8) y passwd (1)\nwc -l /root/man-password.txt\ngrep -E '^(passwd|chpasswd) ' /root/man-password.txt\n\n# Debe mostrar 5\ncat /root/seccion.txt\n\n# Todas las rutas deben empezar por /usr/share/doc\ncat /root/docs-openssh.txt\ngrep -vc '^/usr/share/doc' /root/docs-openssh.txt   # debe dar 0",
+    "explicacion": "Las secciones más útiles son 1 (comandos), 5 (formatos de archivos) y 8 (administración). man -k depende de un índice que crea mandb; en un sistema recién instalado puede estar vacío. Para la documentación larga de GNU usa info (por ejemplo info coreutils) y para ejemplos mira /usr/share/doc."
   },
   {
     "id": "herr-14",

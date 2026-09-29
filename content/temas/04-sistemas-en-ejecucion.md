@@ -28,6 +28,8 @@ systemctl isolate multi-user.target   # cambia de target ahora
 
 ### Resetear la contraseña de root (rd.break)
 
+Es el método documentado por Red Hat: `rd.break`, remontar `/sysroot`, `chroot` y `/.autorelabel`.
+
 ```bash
 # 1. Reinicia y en el menú de GRUB pulsa 'e' sobre la entrada del kernel
 # 2. Ve al final de la línea que empieza con 'linux' y agrega:  rd.break
@@ -40,7 +42,7 @@ exit                           # sales del chroot
 exit                           # continúa el arranque (reetiqueta y reinicia)
 ```
 
-Alternativa: agregar `init=/bin/bash` en lugar de `rd.break`, luego `mount -o remount,rw /`, `passwd root`, `touch /.autorelabel` y `exec /sbin/init`. Usa `rd.break` como método principal.
+Alternativa (no es la documentada): `init=/bin/bash`, luego `mount -o remount,rw /`, `passwd root`, `touch /.autorelabel` y `exec /sbin/init`. Usa `rd.break` como método principal.
 
 ### Procesos: ver, priorizar y terminar
 
@@ -52,8 +54,10 @@ kill 1234                      # señal 15 (terminar amable)
 kill -9 1234                   # señal 9 (forzar)
 pkill -u ana ; killall dd      # por usuario o por nombre
 nice -n 10 tar -czf /tmp/b.tgz /usr   # arranca con prioridad más baja
-renice -n 5 -p 1234            # cambia la prioridad de un proceso vivo
+renice -n 5 -p 1234            # fija nice 5 a un proceso vivo
 ps -o pid,ni,cmd -p 1234       # comprueba el valor nice
+# nice va de -20 (más prioridad) a 19 (menos). Por defecto es 0.
+# Un usuario normal solo puede subir el nice de SUS procesos; bajarlo es cosa de root.
 ```
 
 ### Perfiles de tuned
@@ -79,6 +83,8 @@ tail /var/log/secure           # accesos y autenticación
 
 ### Journal persistente
 
+Por defecto (`Storage=auto` y sin `/var/log/journal`) el journal vive en `/run/log/journal` y se borra al reiniciar.
+
 ```bash
 mkdir -p /etc/systemd/journald.conf.d
 printf '[Journal]\nStorage=persistent\n' > /etc/systemd/journald.conf.d/persist.conf
@@ -89,6 +95,7 @@ systemctl restart systemd-journald   # crea /var/log/journal y guarda en disco
 
 ```bash
 systemctl status sshd ; systemctl enable --now sshd
+systemctl stop cups ; systemctl start cups ; systemctl restart chronyd
 scp /root/a.txt ana@srv2:/tmp/          # copia a otro equipo
 scp -r ana@srv2:/etc/httpd /root/       # copia desde otro equipo
 sftp ana@srv2                           # sesión interactiva: put, get, ls, bye

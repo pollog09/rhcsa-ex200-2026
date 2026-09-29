@@ -28,23 +28,58 @@ Antes de practicar, haz un **snapshot** de cada VM llamado `limpio`. Después de
 ```bash
 # Exportar /home/guests y /shared por NFS (para practicar montaje y autofs)
 sudo dnf install -y nfs-utils
-sudo mkdir -p /shared /home/guests/ldapuser1
+sudo mkdir -p /shared /home/guests/ldapuser01
+# Dueño del home remoto: el mismo UID que tendrá el usuario en servera
+sudo useradd -u 1501 -M -d /home/guests/ldapuser01 ldapuser01
+sudo chown ldapuser01: /home/guests/ldapuser01
 echo "hola desde NFS" | sudo tee /shared/leeme.txt
 echo "/shared       *(rw,sync)" | sudo tee -a /etc/exports
 echo "/home/guests  *(rw,sync)" | sudo tee -a /etc/exports
 sudo systemctl enable --now nfs-server
+sudo exportfs -rv                      # comprueba lo que se exporta
+# nfs = NFSv4 (puerto 2049); mountd y rpc-bind hacen falta para showmount
 sudo firewall-cmd --permanent --add-service={nfs,mountd,rpc-bind}
 sudo firewall-cmd --reload
 
 # Servir un repositorio con el contenido de la ISO (para practicar .repo)
+# La ISO debe estar conectada a la unidad de CD/DVD de serverb
 sudo dnf install -y httpd
 sudo mkdir -p /var/www/html/rhel10
-sudo mount /dev/sr0 /mnt && sudo cp -a /mnt/. /var/www/html/rhel10/
+sudo mount -o ro /dev/sr0 /mnt
+# cp -r (no cp -a): así los archivos no conservan el contexto SELinux de la ISO
+sudo cp -r /mnt/. /var/www/html/rhel10/
+sudo umount /mnt
+sudo restorecon -R /var/www/html/rhel10   # contexto httpd_sys_content_t
 sudo systemctl enable --now httpd
 sudo firewall-cmd --permanent --add-service=http && sudo firewall-cmd --reload
 ```
 
-En `servera` podrás usar `http://serverb/rhel10/BaseOS` y `http://serverb/rhel10/AppStream` como repos, y `serverb:/shared` como exportación NFS.
+En `servera`, agrega `serverb` a `/etc/hosts` (o usa su IP) y crea `/etc/yum.repos.d/lab.repo`:
+
+```ini
+[lab-baseos]
+name=Lab BaseOS
+baseurl=http://serverb/rhel10/BaseOS
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+
+[lab-appstream]
+name=Lab AppStream
+baseurl=http://serverb/rhel10/AppStream
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+```
+
+Prueba con `dnf repolist` y `dnf install -y autofs`. `serverb:/shared` queda como exportación NFS.
+
+Para el ejercicio de autofs con homes remotos, en el examen los usuarios suelen venir de LDAP. En casa, simúlalo creando en `servera` un usuario local con el **mismo UID** que en `serverb` y el home en la ruta que montará autofs (sin crear la carpeta):
+
+```bash
+sudo useradd -u 1501 -M -d /home/guests/ldapuser01 ldapuser01
+echo 'redhat' | sudo passwd --stdin ldapuser01
+# Solo si vas a entrar por SSH con ese usuario (el home está en NFS):
+sudo setsebool -P use_nfs_home_dirs on
+``` En AlmaLinux o Rocky la clave tiene otro nombre: mira `ls /etc/pki/rpm-gpg/`.
 
 ## 5. Nombres usados en los ejercicios
 

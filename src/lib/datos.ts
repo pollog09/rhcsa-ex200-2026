@@ -3,7 +3,14 @@ import path from "node:path";
 import matter from "gray-matter";
 import { z } from "zod";
 import { DOMINIO_SLUGS } from "./dominios";
-import { ComandoSchema, PreguntaSchema, type Comando, type Pregunta } from "./esquema";
+import {
+  ComandoSchema,
+  ObjetivoSchema,
+  PreguntaSchema,
+  type Comando,
+  type Objetivo,
+  type Pregunta,
+} from "./esquema";
 
 // Solo se usa en el servidor (en build time): todas las páginas son estáticas.
 const ROOT = process.cwd();
@@ -24,6 +31,12 @@ export function cargarComandos(): Comando[] {
   const archivo = path.join(ROOT, "data", "comandos.json");
   if (!fs.existsSync(archivo)) return [];
   return z.array(ComandoSchema).parse(JSON.parse(fs.readFileSync(archivo, "utf8")));
+}
+
+export function cargarObjetivos(): Objetivo[] {
+  const archivo = path.join(ROOT, "data", "objetivos.json");
+  if (!fs.existsSync(archivo)) return [];
+  return z.array(ObjetivoSchema).parse(JSON.parse(fs.readFileSync(archivo, "utf8")));
 }
 
 export type Tema = {

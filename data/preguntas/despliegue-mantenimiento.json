@@ -90,8 +90,8 @@
     "dominio": "despliegue-mantenimiento",
     "tipo": "tarea",
     "dificultad": "media",
-    "titulo": "Servidor web básico con httpd",
-    "enunciado": "Configura un servidor web en `servera`:\n\n1. Instala el paquete `httpd`.\n2. Crea el archivo `/var/www/html/index.html` con el texto exacto: `Bienvenido a servera`\n3. El servicio web debe estar en marcha y arrancar automáticamente al iniciar el sistema.\n4. El servidor debe ser accesible desde otras máquinas por HTTP (puerto 80) de forma permanente.",
+    "titulo": "Servicio al arranque y abierto en el firewall",
+    "enunciado": "En `servera`, usa `httpd` como servicio de ejemplo para practicar servicios y firewall:\n\n1. Instala el paquete `httpd`.\n2. Crea el archivo `/var/www/html/index.html` con el texto exacto: `Bienvenido a servera`\n3. El servicio web debe estar en marcha y arrancar automáticamente al iniciar el sistema.\n4. El servidor debe ser accesible desde otras máquinas por HTTP (puerto 80) de forma permanente.",
     "pistas": [
       "El servicio se llama httpd y su contenido por defecto está en /var/www/html.",
       "systemctl enable --now arranca y habilita en un solo paso.",
@@ -148,7 +148,7 @@
       "timedatectl tiene los subcomandos set-timezone y set-ntp."
     ],
     "solucion": "# 1) Comenta los servidores/pools existentes\nsed -i -E 's/^(pool|server) /#&/' /etc/chrony.conf\n\n# Añade el servidor del laboratorio\necho \"server ntp.lab.example.com iburst\" >> /etc/chrony.conf\n\n# Aplica los cambios y habilita el servicio\nsystemctl enable chronyd\nsystemctl restart chronyd\n\n# 2) Zona horaria (puedes buscarla con: timedatectl list-timezones | grep Mexico)\ntimedatectl set-timezone America/Mexico_City\n\n# 3) Activa la sincronización NTP\ntimedatectl set-ntp true",
-    "verificacion": "# Solo debe aparecer esta línea sin comentar\ngrep -E '^(server|pool)' /etc/chrony.conf\n# Debe listar ntp.lab.example.com (^* significa que ya está sincronizado con él)\nchronyc sources -v\n# Time zone: America/Mexico_City y NTP service: active\ntimedatectl\nsystemctl is-enabled chronyd",
+    "verificacion": "# Solo debe aparecer esta línea sin comentar\ngrep -E '^(server|pool)' /etc/chrony.conf\n# Debe listar ntp.lab.example.com (^* significa que ya está sincronizado con él)\nchronyc sources -v\n# Time zone: America/Mexico_City y NTP service: active\ntimedatectl\nsystemctl is-enabled chronyd\n# Tras reiniciar, timedatectl debe seguir mostrando la zona y \"System clock synchronized: yes\"",
     "explicacion": "chrony lee `/etc/chrony.conf` solo al arrancar, por eso hay que reiniciar `chronyd` tras editarlo. `iburst` envía varias consultas al principio para sincronizar más rápido. En la salida de `chronyc sources`, `^*` indica el servidor con el que está sincronizado y `^?` que todavía no responde."
   },
   {
@@ -194,9 +194,9 @@
       "grubby --info=ALL muestra los argumentos de cada kernel.",
       "grubby --default-kernel muestra el kernel por defecto y --set-default lo cambia."
     ],
-    "solucion": "# Añade los parámetros a todas las entradas de arranque\ngrubby --update-kernel=ALL --args=\"audit=1 audit_backlog_limit=8192\"\n\n# Mira qué kernels hay y cuál es el predeterminado\nls /boot/vmlinuz-*\ngrubby --default-kernel\n\n# Si no es el más reciente, fíjalo (ajusta la versión a la tuya)\ngrubby --set-default=/boot/vmlinuz-$(rpm -q --last kernel | head -n1 | sed 's/^kernel-//; s/ .*//')\n\n# Reinicia para aplicarlo\nreboot",
+    "solucion": "# Añade los parámetros a todas las entradas de arranque\ngrubby --update-kernel=ALL --args=\"audit=1 audit_backlog_limit=8192\"\n\n# Mira qué kernels hay y cuál es el predeterminado\nls /boot/vmlinuz-*\ngrubby --default-kernel\n\n# Si no es el más reciente, fíjalo (ajusta la versión a la tuya)\ngrubby --set-default=/boot/vmlinuz-$(rpm -q --last kernel | head -n1 | sed 's/^kernel-//; s/ .*//')\n\n# Reinicia para aplicarlo\nsystemctl reboot",
     "verificacion": "# Todas las líneas args= deben incluir audit=1 audit_backlog_limit=8192\ngrubby --info=ALL | grep -E '^(kernel|args)'\n# Debe ser el kernel más reciente\ngrubby --default-kernel\n# Tras reiniciar, el kernel en ejecución debe tener los parámetros\ncat /proc/cmdline",
-    "explicacion": "En RHEL 10 las entradas de arranque son archivos BLS en `/boot/loader/entries/`, y `grubby` los modifica directamente, por eso el cambio es persistente. Para quitar un parámetro usa `--remove-args`. Los kernels que se instalen más adelante heredan los argumentos de `/etc/kernel/cmdline`, que grubby también actualiza al usar `ALL`."
+    "explicacion": "En RHEL 10 las entradas de arranque son archivos BLS en `/boot/loader/entries/`, y `grubby` los modifica directamente, por eso el cambio es persistente y no hace falta `grub2-mkconfig`. Para quitar un parámetro usa `--remove-args`. Al instalar un kernel nuevo, grubby le pasa los argumentos del kernel anterior."
   },
   {
     "id": "desp-13",
@@ -208,7 +208,7 @@
     "pistas": [],
     "solucion": "",
     "verificacion": "",
-    "explicacion": "GRUB no lee `/etc/default/grub` al arrancar: lee `/boot/grub2/grub.cfg`, que se regenera con `grub2-mkconfig`. En RHEL 10 esa ruta sirve tanto para BIOS como para UEFI. `grubby --args` cambia los parámetros del kernel, no el tiempo de espera; `dracut` regenera el initramfs y `grub2` no es un servicio.",
+    "explicacion": "GRUB no lee `/etc/default/grub` al arrancar: lee `/boot/grub2/grub.cfg`, que se regenera con `grub2-mkconfig`. En RHEL 10 esa ruta sirve tanto para BIOS como para UEFI. Si cambiaras `GRUB_CMDLINE_LINUX`, tendrías que agregar `--update-bls-cmdline` para que llegue a las entradas BLS. `grubby --args` cambia los parámetros del kernel, no el tiempo de espera; `dracut` regenera el initramfs y `grub2` no es un servicio.",
     "opciones": [
       "grubby --update-kernel=ALL --args=\"GRUB_TIMEOUT=10\"",
       "grub2-mkconfig -o /boot/grub2/grub.cfg",

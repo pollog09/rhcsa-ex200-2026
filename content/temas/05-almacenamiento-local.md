@@ -31,8 +31,9 @@ parted /dev/vdb mkpart datos xfs 1MiB 1GiB     # partición de 1 GiB
 parted /dev/vdb mkpart lvm 1GiB 3GiB
 parted /dev/vdb set 2 lvm on                   # marca la partición 2 para LVM
 udevadm settle                                 # espera a que aparezca el dispositivo
-# alternativas interactivas: fdisk /dev/vdb  o  gdisk /dev/vdb
-# (n = nueva, t = tipo, p = mostrar, w = guardar)
+parted /dev/vdb rm 3                           # borra la partición 3 (desmonta y limpia fstab antes)
+# alternativa interactiva: fdisk /dev/vdb  (n = nueva, t = tipo, d = borrar, p = mostrar, w = guardar)
+# gdisk no viene en RHEL 10: usa parted o fdisk
 ```
 
 ### LVM: crear
@@ -41,7 +42,7 @@ udevadm settle                                 # espera a que aparezca el dispos
 pvcreate /dev/vdb2                        # volumen físico
 vgcreate -s 8M vgdatos /dev/vdb2          # grupo con extensiones de 8 MiB
 lvcreate -n lvdatos -L 500M vgdatos       # volumen de 500 MiB
-lvcreate -n lvapp -l 50 vgdatos           # volumen de 50 extensiones
+lvcreate -n lvapp -l 50 vgdatos           # volumen de 50 extensiones (-l = extensiones, -L = tamaño)
 mkfs.xfs /dev/vgdatos/lvdatos             # formatea
 pvs ; vgs ; lvs                           # resumen de cada capa
 vgdisplay vgdatos                         # detalle, incluye el tamaño de PE
@@ -52,8 +53,9 @@ vgdisplay vgdatos                         # detalle, incluye el tamaño de PE
 ```bash
 umount /datos                             # y quita su línea de /etc/fstab
 lvremove -y /dev/vgdatos/lvdatos
+vgreduce vgdatos /dev/vdc1                # saca un PV vacío del VG (si tiene datos: pvmove antes)
 vgremove vgdatos
-pvremove /dev/vdb2
+pvremove /dev/vdb2                        # quita la marca LVM (el PV no debe estar en ningún VG)
 ```
 
 ### Montaje persistente por UUID o LABEL
@@ -64,8 +66,11 @@ blkid /dev/vgdatos/lvdatos                # copia el UUID
 vim /etc/fstab
 # UUID=1234-abcd  /datos  xfs  defaults  0 0
 # LABEL=backup    /backup ext4 defaults  0 0
+# etiquetas: xfs_admin -L backup (XFS desmontado), e2label /dev/vdb2 backup, fatlabel /dev/vdb3 BACKUP
+# nofail en las opciones: si el disco falta, el arranque sigue
 systemctl daemon-reload                   # que systemd lea el fstab nuevo
 mount -a                                  # prueba el fstab sin reiniciar
+findmnt --verify                          # revisa errores de fstab
 findmnt /datos
 ```
 
@@ -82,7 +87,7 @@ swapon --show ; free -h
 
 ### Fuera del examen RHEL 10
 
-Stratis (`stratis pool create`) y VDO se ven en el curso, pero están fuera del examen RHEL 10.
+Stratis (`stratis pool create`) y VDO aparecen en cursos y guías de RHEL 8/9, pero están fuera del examen RHEL 10.
 
 ## Así lo piden en el examen
 

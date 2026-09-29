@@ -61,9 +61,9 @@
       "El sistema real está montado en `/sysroot` en modo solo lectura: remóntalo en lectura/escritura y entra con `chroot`.",
       "Antes de salir, crea el archivo `/.autorelabel` para que SELinux vuelva a etiquetar `/etc/shadow`."
     ],
-    "solucion": "# 1. Reiniciar la máquina (desde la consola) y, en el menú de GRUB,\n#    seleccionar la entrada del kernel y pulsar 'e'.\n\n# 2. Al final de la línea que empieza por 'linux' añadir:\n#       rd.break\n#    y pulsar Ctrl+x para arrancar.\n\n# 3. En la shell del initramfs (switch_root:/#):\nmount -o remount,rw /sysroot     # montar el sistema real en lectura/escritura\nchroot /sysroot                  # entrar en el sistema real\n\n# 4. Cambiar la contraseña de root\npasswd root                      # escribir Rec0very!26 dos veces\n# (alternativa sin preguntas: echo 'Rec0very!26' | passwd --stdin root)\n\n# 5. Forzar el reetiquetado de SELinux en el próximo arranque\ntouch /.autorelabel\n\n# 6. Salir dos veces: del chroot y de la shell de emergencia\nexit\nexit\n# El sistema reetiqueta los archivos (puede tardar) y se reinicia solo.\n\n# Alternativa: en lugar de rd.break, añadir 'init=/bin/bash'.\n# Entonces la raíz es '/' directamente (no hay /sysroot ni chroot):\n#   mount -o remount,rw /\n#   passwd root\n#   touch /.autorelabel\n#   exec /sbin/init        (o reiniciar con: /usr/sbin/reboot -f)",
+    "solucion": "# 1. Reiniciar la máquina (desde la consola) y, en el menú de GRUB,\n#    seleccionar la entrada del kernel y pulsar 'e'.\n\n# 2. Al final de la línea que empieza por 'linux' añadir:\n#       rd.break\n#    y pulsar Ctrl+x para arrancar.\n\n# 3. En la shell del initramfs (switch_root:/#):\nmount -o remount,rw /sysroot     # montar el sistema real en lectura/escritura\nchroot /sysroot                  # entrar en el sistema real\n\n# 4. Cambiar la contraseña de root\npasswd root                      # escribir Rec0very!26 dos veces\n# (alternativa sin preguntas: echo 'Rec0very!26' | passwd --stdin root)\n\n# 5. Forzar el reetiquetado de SELinux en el próximo arranque\ntouch /.autorelabel\n\n# 6. Salir dos veces: del chroot y de la shell de emergencia\nexit\nexit\n# El sistema reetiqueta los archivos (puede tardar) y se reinicia solo.\n\n# Alternativa no documentada por Red Hat: en lugar de rd.break, añadir 'init=/bin/bash'.\n# Entonces la raíz es '/' directamente (no hay /sysroot ni chroot):\n#   mount -o remount,rw /\n#   passwd root\n#   touch /.autorelabel\n#   exec /sbin/init        (o reiniciar con: /usr/sbin/reboot -f)",
     "verificacion": "# Después del arranque normal, inicia sesión como root con la nueva contraseña\n# en la consola o por SSH: ssh root@localhost\n\ngetenforce                       # Debe mostrar Enforcing\nls -Z /etc/shadow                # Contexto shadow_t\nls /.autorelabel 2>/dev/null     # No debe existir: se borra tras el reetiquetado",
-    "explicacion": "Con `rd.break` el arranque se detiene en el initramfs, antes de montar el sistema real como raíz, por eso hay que trabajar sobre `/sysroot`. `passwd` crea un `/etc/shadow` nuevo sin el contexto SELinux correcto; sin `/.autorelabel`, con SELinux en enforcing, nadie podría iniciar sesión."
+    "explicacion": "Es el procedimiento documentado por Red Hat. Con `rd.break` el arranque se detiene en el initramfs, antes de montar el sistema real como raíz, por eso hay que trabajar sobre `/sysroot`. `passwd` crea un `/etc/shadow` nuevo sin el contexto SELinux correcto; sin `/.autorelabel`, con SELinux en enforcing, nadie podría iniciar sesión."
   },
   {
     "id": "oper-05",
@@ -114,7 +114,7 @@
     ],
     "solucion": "# 1. Iniciar con nice 10\nnice -n 10 sha1sum /dev/zero &\nPID=$!                               # PID del último proceso en segundo plano\n\n# 2. Ver el valor nice\nps -o pid,ni,comm -p \"$PID\"          # NI = 10\n\n# 3. Cambiarlo a 5 (bajar el nice requiere ser root)\nrenice -n 5 -p \"$PID\"\n\n# 4. Terminar el proceso\nkill \"$PID\"",
     "verificacion": "# Antes del paso 4:\nps -o pid,ni,comm -C sha1sum         # NI debe ser 5\n# Después del paso 4:\npgrep sha1sum || echo \"terminado\"",
-    "explicacion": "El valor nice va de -20 (más prioridad) a 19 (menos prioridad) y por defecto es 0. Un usuario normal solo puede subir el nice de sus procesos (hacerlos menos prioritarios); bajarlo, como de 10 a 5, solo lo puede hacer root."
+    "explicacion": "El valor nice va de -20 (más prioridad) a 19 (menos prioridad) y por defecto es 0. Un usuario normal solo puede subir el nice de sus propios procesos (hacerlos menos prioritarios); bajarlo, como de 10 a 5, solo lo puede hacer root. `renice -n 5` fija el valor 5 (no suma 5)."
   },
   {
     "id": "oper-08",
@@ -156,7 +156,7 @@
     "tipo": "tarea",
     "dificultad": "media",
     "titulo": "Hacer persistente el journal",
-    "enunciado": "Por defecto, el journal de systemd puede guardarse solo en memoria (`/run/log/journal`) y perderse al reiniciar. Configura `systemd-journald` para que los registros se guarden de forma **persistente** en disco y se conserven entre reinicios. Usa un archivo *drop-in* en `/etc/systemd/journald.conf.d/`.",
+    "enunciado": "Por defecto, en RHEL 10 el journal de systemd se guarda solo en memoria (`/run/log/journal`) y se pierde al reiniciar. Configura `systemd-journald` para que los registros se guarden de forma **persistente** en disco y se conserven entre reinicios. Usa un archivo *drop-in* en `/etc/systemd/journald.conf.d/`.",
     "pistas": [
       "La opción es `Storage=persistent` en la sección `[Journal]`.",
       "Los registros persistentes se guardan en `/var/log/journal`.",
@@ -164,7 +164,7 @@
     ],
     "solucion": "# Crear el directorio para drop-ins\nmkdir -p /etc/systemd/journald.conf.d\n\n# Crear el archivo de configuración\ncat > /etc/systemd/journald.conf.d/persistente.conf <<'EOF'\n[Journal]\nStorage=persistent\nEOF\n\n# Aplicar el cambio (crea /var/log/journal si no existe)\nsystemctl restart systemd-journald\n\n# Alternativa: editar /etc/systemd/journald.conf, descomentar y poner\n#   Storage=persistent\n# en la sección [Journal], y reiniciar systemd-journald.",
     "verificacion": "systemd-analyze cat-config systemd/journald.conf | grep -i '^Storage'   # Storage=persistent\nls -d /var/log/journal/$(cat /etc/machine-id)                            # Existe el directorio\njournalctl --disk-usage\n\n# Tras reiniciar el sistema, deben aparecer varios arranques:\njournalctl --list-boots\njournalctl -b -1 | head      # Registros del arranque anterior",
-    "explicacion": "Con `Storage=persistent` journald escribe en `/var/log/journal` y crea el directorio si falta. Con el valor por defecto `auto`, solo se guarda en disco si ese directorio ya existe. `journalctl -b -1` solo funciona si el journal del arranque anterior se guardó en disco."
+    "explicacion": "Con `Storage=persistent` journald escribe en `/var/log/journal` y crea el directorio si falta. Con el valor por defecto `auto`, solo se guarda en disco si ese directorio ya existe, y en una instalación nueva no existe. `journalctl -b -1` solo funciona si el journal del arranque anterior se guardó en disco."
   },
   {
     "id": "oper-11",
@@ -207,13 +207,13 @@
     "tipo": "tarea",
     "dificultad": "facil",
     "titulo": "Gestionar servicios de red",
-    "enunciado": "En tu servidor:\n\n1. Asegúrate de que el servicio `sshd` está **en ejecución** y **habilitado** para arrancar con el sistema.\n2. Asegúrate de que el servicio de hora `chronyd` está en ejecución y habilitado, y **reinícialo**.\n3. Comprueba en qué puerto TCP escucha `sshd`.\n4. Guarda el estado completo del servicio `sshd` (salida de `systemctl status`) en `/root/sshd-estado.txt`.",
+    "enunciado": "En tu servidor:\n\n1. Asegúrate de que el servicio `sshd` está **en ejecución** y **habilitado** para arrancar con el sistema.\n2. Asegúrate de que el servicio de hora `chronyd` está en ejecución y habilitado, y **reinícialo**.\n3. **Detén** el servicio `cups` (si no está instalado, sáltate este paso) y comprueba su estado.\n4. Comprueba en qué puerto TCP escucha `sshd`.\n5. Guarda el estado completo del servicio `sshd` (salida de `systemctl status`) en `/root/sshd-estado.txt`.",
     "pistas": [
       "`systemctl enable --now servicio` habilita y arranca en un solo paso.",
       "`ss -tlnp` muestra los puertos TCP en escucha y el proceso que los usa."
     ],
-    "solucion": "# 1. sshd activo y habilitado\nsystemctl enable --now sshd\n\n# 2. chronyd activo, habilitado y reiniciado\nsystemctl enable --now chronyd\nsystemctl restart chronyd\n\n# 3. Puerto en el que escucha sshd\nss -tlnp | grep sshd            # normalmente 0.0.0.0:22 y [::]:22\n\n# 4. Guardar el estado (sin paginador)\nsystemctl status sshd --no-pager > /root/sshd-estado.txt",
-    "verificacion": "systemctl is-active sshd chronyd     # active / active\nsystemctl is-enabled sshd chronyd    # enabled / enabled (persisten tras reinicio)\ngrep -i 'active (running)' /root/sshd-estado.txt\nchronyc tracking | head -n 3         # chronyd responde",
+    "solucion": "# 1. sshd activo y habilitado\nsystemctl enable --now sshd\n\n# 2. chronyd activo, habilitado y reiniciado\nsystemctl enable --now chronyd\nsystemctl restart chronyd\n\n# 3. Detener un servicio y ver su estado\nsystemctl stop cups\nsystemctl status cups --no-pager    # Active: inactive (dead)\n\n# 4. Puerto en el que escucha sshd\nss -tlnp | grep sshd            # normalmente 0.0.0.0:22 y [::]:22\n\n# 5. Guardar el estado (sin paginador)\nsystemctl status sshd --no-pager > /root/sshd-estado.txt",
+    "verificacion": "systemctl is-active sshd chronyd     # active / active\nsystemctl is-enabled sshd chronyd    # enabled / enabled (persisten tras reinicio)\nsystemctl is-active cups            # inactive\ngrep -i 'active (running)' /root/sshd-estado.txt\nchronyc tracking | head -n 3         # chronyd responde",
     "explicacion": "`start` solo arranca el servicio ahora y `enable` solo hace que arranque en el próximo inicio; necesitas los dos (o `enable --now`). Para detener y deshabilitar un servicio se usa `systemctl disable --now servicio`."
   },
   {

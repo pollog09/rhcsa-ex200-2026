@@ -9,7 +9,8 @@
     "lint": "eslint",
     "validate": "tsx scripts/validate-preguntas.ts",
     "prebuild": "npm run validate",
-    "comandos:md": "tsx scripts/generar-comandos-md.ts"
+    "comandos:md": "tsx scripts/generar-comandos-md.ts",
+    "cobertura:md": "tsx scripts/generar-cobertura-md.ts"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",

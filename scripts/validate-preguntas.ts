@@ -1,6 +1,6 @@
 // Valida los datos del sitio: npm run validate
 import { z } from "zod";
-import { cargarComandos, cargarPreguntas, cargarTemas } from "../src/lib/datos";
+import { cargarComandos, cargarObjetivos, cargarPreguntas, cargarTemas } from "../src/lib/datos";
 import { DOMINIO_SLUGS } from "../src/lib/dominios";
 
 const ESPERADAS = 111;
@@ -31,6 +31,20 @@ for (const slug of DOMINIO_SLUGS) {
 const temas = cargarTemas();
 for (const slug of DOMINIO_SLUGS) if (!temas.some((t) => t.slug === slug)) errores.push(`Falta el tema ${slug}`);
 const comandos = cargarComandos();
+
+// Cada objetivo oficial del EX200 debe estar cubierto por al menos un ejercicio existente
+const OBJETIVOS_OFICIALES = 62;
+const objetivos = cargarObjetivos();
+if (objetivos.length !== OBJETIVOS_OFICIALES) errores.push(`Hay ${objetivos.length} objetivos, se esperaban ${OBJETIVOS_OFICIALES}`);
+for (const o of objetivos) {
+  if (!o.ejercicios.length) errores.push(`Objetivo sin ejercicios: ${o.oficial}`);
+  for (const id of o.ejercicios) {
+    const p = preguntas.find((x) => x.id === id);
+    if (!p) errores.push(`Objetivo "${o.oficial}" referencia un ejercicio inexistente: ${id}`);
+    else if (p.dominio !== o.dominio) console.warn(`Aviso: ${id} (${p.dominio}) cubre un objetivo de ${o.dominio}`);
+  }
+}
+console.log(`Objetivos oficiales: ${objetivos.length}`);
 console.log(`\nPreguntas: ${preguntas.length} · Temas: ${temas.length} · Comandos: ${comandos.length}`);
 
 if (errores.length) {

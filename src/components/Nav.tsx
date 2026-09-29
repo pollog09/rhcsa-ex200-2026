@@ -6,6 +6,7 @@ import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 
 const ENLACES = [
+  { href: "/objetivos", label: "Objetivos" },
   { href: "/temas", label: "Temas" },
   { href: "/comandos", label: "Comandos" },
   { href: "/practica", label: "Práctica" },

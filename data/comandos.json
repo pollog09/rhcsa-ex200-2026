@@ -104,7 +104,7 @@
   {
     "dominio": "herramientas-esenciales",
     "comando": "tar",
-    "descripcion": "Empaqueta y comprime archivos",
+    "descripcion": "Empaqueta y comprime (-z gzip, -j bzip2) o extrae (-x)",
     "ejemplo": "tar -czf /root/etc.tar.gz /etc"
   },
   {
@@ -156,6 +156,30 @@
     "ejemplo": "man -k partition"
   },
   {
+    "dominio": "herramientas-esenciales",
+    "comando": "tar -x",
+    "descripcion": "Extrae un archivo tar en otra carpeta",
+    "ejemplo": "tar -xjf /root/etc.tar.bz2 -C /tmp/restaurado"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "gunzip / bunzip2",
+    "descripcion": "Descomprime archivos .gz o .bz2",
+    "ejemplo": "bunzip2 /tmp/informe.txt.bz2"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "mandb",
+    "descripcion": "Regenera el índice que usa man -k",
+    "ejemplo": "mandb && man -k password"
+  },
+  {
+    "dominio": "herramientas-esenciales",
+    "comando": "info",
+    "descripcion": "Abre la documentación en formato info",
+    "ejemplo": "info coreutils"
+  },
+  {
     "dominio": "software",
     "comando": "dnf install",
     "descripcion": "Instala paquetes con sus dependencias",
@@ -200,7 +224,7 @@
   {
     "dominio": "software",
     "comando": "dnf config-manager",
-    "descripcion": "Agrega un repositorio por URL",
+    "descripcion": "Agrega, habilita o deshabilita repositorios (dnf 4 en RHEL 10)",
     "ejemplo": "dnf config-manager --add-repo http://repo.ejemplo.com/BaseOS"
   },
   {
@@ -236,8 +260,8 @@
   {
     "dominio": "software",
     "comando": "flatpak remote-add",
-    "descripcion": "Agrega un repositorio Flatpak",
-    "ejemplo": "flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo"
+    "descripcion": "Agrega un repositorio Flatpak (rhel es el remoto oficial de Red Hat)",
+    "ejemplo": "flatpak remote-add --if-not-exists rhel https://flatpaks.redhat.io/rhel.flatpakrepo"
   },
   {
     "dominio": "software",
@@ -249,7 +273,7 @@
     "dominio": "software",
     "comando": "flatpak install",
     "descripcion": "Instala una aplicación Flatpak",
-    "ejemplo": "flatpak install -y flathub org.gnome.Calculator"
+    "ejemplo": "flatpak install -y rhel org.gnome.Calculator"
   },
   {
     "dominio": "software",
@@ -262,6 +286,12 @@
     "comando": "flatpak uninstall",
     "descripcion": "Desinstala una aplicación Flatpak",
     "ejemplo": "flatpak uninstall -y org.gnome.Calculator"
+  },
+  {
+    "dominio": "software",
+    "comando": "flatpak remote-ls",
+    "descripcion": "Lista las aplicaciones de un remoto Flatpak",
+    "ejemplo": "flatpak remote-ls --app rhel"
   },
   {
     "dominio": "scripts",
@@ -446,7 +476,7 @@
   {
     "dominio": "sistemas-en-ejecucion",
     "comando": "renice",
-    "descripcion": "Cambia la prioridad de un proceso en marcha",
+    "descripcion": "Fija el nice de un proceso en marcha (bajarlo requiere root)",
     "ejemplo": "renice -n 5 -p 1234"
   },
   {
@@ -464,7 +494,7 @@
   {
     "dominio": "sistemas-en-ejecucion",
     "comando": "Storage=persistent",
-    "descripcion": "Guarda el journal en disco",
+    "descripcion": "Guarda el journal en /var/log/journal (por defecto va a /run y se pierde)",
     "ejemplo": "printf \"[Journal]\\nStorage=persistent\\n\" > /etc/systemd/journald.conf.d/persist.conf"
   },
   {
@@ -484,6 +514,12 @@
     "comando": "rsync",
     "descripcion": "Sincroniza archivos de forma incremental",
     "ejemplo": "rsync -avz /datos/ ana@srv2:/respaldo/"
+  },
+  {
+    "dominio": "sistemas-en-ejecucion",
+    "comando": "journalctl --list-boots",
+    "descripcion": "Lista los arranques guardados en el journal",
+    "ejemplo": "journalctl --list-boots"
   },
   {
     "dominio": "almacenamiento-local",
@@ -517,9 +553,9 @@
   },
   {
     "dominio": "almacenamiento-local",
-    "comando": "gdisk",
-    "descripcion": "Particiona discos GPT de forma interactiva",
-    "ejemplo": "gdisk /dev/vdb"
+    "comando": "parted rm",
+    "descripcion": "Borra una partición por su número (gdisk no viene en RHEL 10)",
+    "ejemplo": "parted /dev/vdb rm 3"
   },
   {
     "dominio": "almacenamiento-local",
@@ -571,6 +607,12 @@
   },
   {
     "dominio": "almacenamiento-local",
+    "comando": "vgreduce",
+    "descripcion": "Saca un PV vacío de un grupo de volúmenes",
+    "ejemplo": "pvmove /dev/vdb1 && vgreduce vgdatos /dev/vdb1"
+  },
+  {
+    "dominio": "almacenamiento-local",
     "comando": "pvremove",
     "descripcion": "Quita la marca LVM de un dispositivo",
     "ejemplo": "pvremove /dev/vdb2"
@@ -595,6 +637,12 @@
   },
   {
     "dominio": "almacenamiento-local",
+    "comando": "xfs_admin -L / e2label",
+    "descripcion": "Pone una etiqueta (LABEL) a un XFS desmontado o a un ext4",
+    "ejemplo": "xfs_admin -L BACKUP /dev/vdb1 ; e2label /dev/vdb2 datos"
+  },
+  {
+    "dominio": "almacenamiento-local",
     "comando": "findmnt",
     "descripcion": "Muestra montajes y valida fstab",
     "ejemplo": "findmnt --verify"
@@ -608,7 +656,7 @@
   {
     "dominio": "sistemas-de-archivos",
     "comando": "mkfs.xfs",
-    "descripcion": "Crea un sistema de archivos XFS",
+    "descripcion": "Crea un sistema de archivos XFS (mínimo ~300 MiB)",
     "ejemplo": "mkfs.xfs /dev/vdb1"
   },
   {
@@ -620,8 +668,8 @@
   {
     "dominio": "sistemas-de-archivos",
     "comando": "mkfs.vfat",
-    "descripcion": "Crea un sistema de archivos VFAT",
-    "ejemplo": "mkfs.vfat /dev/vdb3"
+    "descripcion": "Crea un VFAT con etiqueta (paquete dosfstools)",
+    "ejemplo": "mkfs.vfat -n USB /dev/vdb3"
   },
   {
     "dominio": "sistemas-de-archivos",
@@ -818,7 +866,7 @@
   {
     "dominio": "despliegue-mantenimiento",
     "comando": "grubby",
-    "descripcion": "Cambia el kernel y sus opciones de arranque",
+    "descripcion": "Cambia las opciones del kernel en las entradas BLS (persistente)",
     "ejemplo": "grubby --update-kernel=ALL --args=\"quiet\""
   },
   {
@@ -830,8 +878,14 @@
   {
     "dominio": "despliegue-mantenimiento",
     "comando": "grub2-mkconfig",
-    "descripcion": "Regenera la configuración de GRUB",
-    "ejemplo": "grub2-mkconfig -o /boot/grub2/grub.cfg"
+    "descripcion": "Regenera grub.cfg (misma ruta en BIOS y UEFI); con --update-bls-cmdline aplica GRUB_CMDLINE_LINUX",
+    "ejemplo": "grub2-mkconfig -o /boot/grub2/grub.cfg --update-bls-cmdline"
+  },
+  {
+    "dominio": "despliegue-mantenimiento",
+    "comando": "timedatectl set-ntp",
+    "descripcion": "Activa o desactiva la sincronización NTP",
+    "ejemplo": "timedatectl set-ntp true"
   },
   {
     "dominio": "redes",
@@ -946,6 +1000,12 @@
     "comando": "firewall-cmd --list-all",
     "descripcion": "Muestra la configuración de la zona",
     "ejemplo": "firewall-cmd --list-all"
+  },
+  {
+    "dominio": "redes",
+    "comando": "/etc/NetworkManager/system-connections/",
+    "descripcion": "Perfiles de red en formato keyfile (ifcfg ya no se admite en RHEL 10)",
+    "ejemplo": "ls /etc/NetworkManager/system-connections/"
   },
   {
     "dominio": "usuarios-grupos",
@@ -1074,6 +1134,24 @@
     "ejemplo": "sudo -l -U ana"
   },
   {
+    "dominio": "usuarios-grupos",
+    "comando": "passwd --stdin",
+    "descripcion": "Asigna una contraseña sin preguntar",
+    "ejemplo": "echo \"Clave2026\" | passwd --stdin ana"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "visudo -c",
+    "descripcion": "Valida la sintaxis de todos los archivos sudoers",
+    "ejemplo": "visudo -c"
+  },
+  {
+    "dominio": "usuarios-grupos",
+    "comando": "useradd -D",
+    "descripcion": "Muestra los valores por defecto de useradd",
+    "ejemplo": "useradd -D"
+  },
+  {
     "dominio": "seguridad",
     "comando": "firewall-cmd --get-active-zones",
     "descripcion": "Muestra las zonas activas",
@@ -1094,7 +1172,7 @@
   {
     "dominio": "seguridad",
     "comando": "umask",
-    "descripcion": "Muestra o cambia la máscara de permisos",
+    "descripcion": "Muestra o cambia la máscara de permisos (por defecto 0022, UMASK en /etc/login.defs)",
     "ejemplo": "umask 077"
   },
   {
@@ -1204,5 +1282,11 @@
     "comando": "sealert",
     "descripcion": "Explica una denegación y sugiere solución",
     "ejemplo": "sealert -a /var/log/audit/audit.log"
+  },
+  {
+    "dominio": "seguridad",
+    "comando": "/etc/ssh/sshd_config.d/",
+    "descripcion": "Drop-ins de sshd; gana el primer valor leído (PermitRootLogin por defecto: prohibit-password)",
+    "ejemplo": "echo \"PermitRootLogin no\" > /etc/ssh/sshd_config.d/00-examen.conf"
   }
 ]

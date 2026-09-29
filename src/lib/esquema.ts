@@ -33,3 +33,13 @@ export const ComandoSchema = z.object({
 });
 
 export type Comando = z.infer<typeof ComandoSchema>;
+
+export const ObjetivoSchema = z.object({
+  id: z.string(),
+  dominio: z.enum(DOMINIO_SLUGS as [string, ...string[]]),
+  oficial: z.string(), // texto literal publicado por Red Hat
+  explicacion: z.string(), // qué significa, en palabras simples
+  ejercicios: z.array(z.string()),
+});
+
+export type Objetivo = z.infer<typeof ObjetivoSchema>;

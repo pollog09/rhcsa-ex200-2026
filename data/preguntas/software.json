@@ -78,7 +78,7 @@
     ],
     "solucion": "# Instalar flatpak si falta\ndnf install -y flatpak\n\n# Añadir el remoto a nivel de sistema (por defecto como root)\nflatpak remote-add --if-not-exists lab-flatpak http://repo.lab.example.com/flatpak/lab.flatpakrepo\n\n# Listar solo las aplicaciones del remoto\nflatpak remote-ls --app lab-flatpak > /root/apps-flatpak.txt",
     "verificacion": "# El remoto debe aparecer con la opción \"system\"\nflatpak remotes --show-details\n\n# El archivo debe contener aplicaciones\ncat /root/apps-flatpak.txt\n\n# Persiste: la configuración vive en /var/lib/flatpak/repo/config\ngrep lab-flatpak /var/lib/flatpak/repo/config",
-    "explicacion": "El archivo .flatpakrepo trae la URL del repositorio y su clave GPG, por eso no hay que importar nada más. Como root el remoto se añade para todo el sistema; con --user se añadiría solo para el usuario actual."
+    "explicacion": "El archivo .flatpakrepo trae la URL del repositorio y su clave GPG, por eso no hay que importar nada más. Como root el remoto se añade para todo el sistema; con --user se añadiría solo para el usuario actual. El remoto oficial de Red Hat se añade igual: flatpak remote-add --if-not-exists rhel https://flatpaks.redhat.io/rhel.flatpakrepo (con suscripción activa no pide credenciales)."
   },
   {
     "id": "soft-06",

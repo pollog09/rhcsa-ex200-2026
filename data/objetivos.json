@@ -1,0 +1,636 @@
+[
+  {
+    "id": "herr-obj-01",
+    "dominio": "herramientas-esenciales",
+    "oficial": "Access a shell prompt and issue commands with correct syntax",
+    "explicacion": "Abrir la terminal y escribir comandos con sus opciones y argumentos en el orden correcto.",
+    "ejercicios": [
+      "herr-01",
+      "herr-10"
+    ]
+  },
+  {
+    "id": "herr-obj-02",
+    "dominio": "herramientas-esenciales",
+    "oficial": "Use input-output redirection (>, >>, |, 2>, etc.)",
+    "explicacion": "Guardar la salida en archivos (>, >>), separar los errores (2>) y encadenar comandos con |.",
+    "ejercicios": [
+      "herr-08",
+      "herr-14"
+    ]
+  },
+  {
+    "id": "herr-obj-03",
+    "dominio": "herramientas-esenciales",
+    "oficial": "Use grep and regular expressions to analyze text",
+    "explicacion": "Buscar líneas que cumplan un patrón (^inicio, fin$, [0-9]...) y guardar el resultado.",
+    "ejercicios": [
+      "herr-02",
+      "herr-09"
+    ]
+  },
+  {
+    "id": "herr-obj-04",
+    "dominio": "herramientas-esenciales",
+    "oficial": "Access remote systems using SSH",
+    "explicacion": "Conectarte a otra máquina con ssh usuario@host y ejecutar comandos allí.",
+    "ejercicios": [
+      "herr-07"
+    ]
+  },
+  {
+    "id": "herr-obj-05",
+    "dominio": "herramientas-esenciales",
+    "oficial": "Log in and switch users in multi-user targets",
+    "explicacion": "Iniciar sesión en modo texto y cambiar de usuario con su / su - o usar sudo.",
+    "ejercicios": [
+      "herr-07",
+      "herr-08",
+      "herr-11"
+    ]
+  },
+  {
+    "id": "herr-obj-06",
+    "dominio": "herramientas-esenciales",
+    "oficial": "Archive, compress, unpack, and uncompress files using tar, gzip, and bzip2",
+    "explicacion": "Crear y extraer archivos .tar.gz y .tar.bz2 (tar -czf / -cjf / -xf) y usar gzip/bzip2 sueltos.",
+    "ejercicios": [
+      "herr-03",
+      "herr-04"
+    ]
+  },
+  {
+    "id": "herr-obj-07",
+    "dominio": "herramientas-esenciales",
+    "oficial": "Create and edit text files",
+    "explicacion": "Crear y modificar archivos con vim (o nano), guardar y salir sin perder cambios.",
+    "ejercicios": [
+      "herr-05",
+      "herr-10"
+    ]
+  },
+  {
+    "id": "herr-obj-08",
+    "dominio": "herramientas-esenciales",
+    "oficial": "Create, delete, copy, and move files and directories",
+    "explicacion": "Manejar archivos y carpetas con mkdir, cp, mv, rm y sus opciones -r / -p.",
+    "ejercicios": [
+      "herr-01",
+      "herr-10"
+    ]
+  },
+  {
+    "id": "herr-obj-09",
+    "dominio": "herramientas-esenciales",
+    "oficial": "Create hard and soft links",
+    "explicacion": "Crear enlaces duros (ln) y simbólicos (ln -s) y entender la diferencia.",
+    "ejercicios": [
+      "herr-05"
+    ]
+  },
+  {
+    "id": "herr-obj-10",
+    "dominio": "herramientas-esenciales",
+    "oficial": "List, set, and change standard ugo/rwx permissions",
+    "explicacion": "Leer permisos con ls -l y cambiarlos con chmod (simbólico u octal) y chown/chgrp.",
+    "ejercicios": [
+      "herr-06"
+    ]
+  },
+  {
+    "id": "herr-obj-11",
+    "dominio": "herramientas-esenciales",
+    "oficial": "Locate, read, and use system documentation including man, info, and files in /usr/share/doc",
+    "explicacion": "Encontrar ayuda sin internet: man -k, secciones del manual, info y /usr/share/doc.",
+    "ejercicios": [
+      "herr-12",
+      "herr-13"
+    ]
+  },
+  {
+    "id": "soft-obj-01",
+    "dominio": "software",
+    "oficial": "Configure access to RPM repositories",
+    "explicacion": "Crear archivos .repo en /etc/yum.repos.d para que dnf sepa de dónde descargar paquetes.",
+    "ejercicios": [
+      "soft-01",
+      "soft-02",
+      "soft-07"
+    ]
+  },
+  {
+    "id": "soft-obj-02",
+    "dominio": "software",
+    "oficial": "Install and remove RPM software packages",
+    "explicacion": "Instalar, quitar y consultar paquetes con dnf y rpm.",
+    "ejercicios": [
+      "soft-03",
+      "soft-04"
+    ]
+  },
+  {
+    "id": "soft-obj-03",
+    "dominio": "software",
+    "oficial": "Configure access to Flatpak repositories",
+    "explicacion": "Agregar un remoto de Flatpak con flatpak remote-add.",
+    "ejercicios": [
+      "soft-05"
+    ]
+  },
+  {
+    "id": "soft-obj-04",
+    "dominio": "software",
+    "oficial": "Install and remove Flatpak software packages",
+    "explicacion": "Instalar, listar y desinstalar aplicaciones Flatpak.",
+    "ejercicios": [
+      "soft-06"
+    ]
+  },
+  {
+    "id": "scr-obj-01",
+    "dominio": "scripts",
+    "oficial": "Conditionally execute code (use of: if, test, [], etc.)",
+    "explicacion": "Hacer que el script decida con if/elif/else, test y [ ].",
+    "ejercicios": [
+      "scr-01",
+      "scr-02",
+      "scr-03",
+      "scr-05",
+      "scr-08"
+    ]
+  },
+  {
+    "id": "scr-obj-02",
+    "dominio": "scripts",
+    "oficial": "Use Looping constructs (for, etc.) to process file, command line input",
+    "explicacion": "Repetir acciones con for o while sobre archivos, líneas o argumentos.",
+    "ejercicios": [
+      "scr-02",
+      "scr-03",
+      "scr-05"
+    ]
+  },
+  {
+    "id": "scr-obj-03",
+    "dominio": "scripts",
+    "oficial": "Process script inputs ($1, $2, etc.)",
+    "explicacion": "Leer argumentos del script ($1, $2, $#, $@) y validar que existan.",
+    "ejercicios": [
+      "scr-01",
+      "scr-02",
+      "scr-04",
+      "scr-05",
+      "scr-07"
+    ]
+  },
+  {
+    "id": "scr-obj-04",
+    "dominio": "scripts",
+    "oficial": "Processing output of shell commands within a script",
+    "explicacion": "Usar la salida de un comando dentro del script con $(comando).",
+    "ejercicios": [
+      "scr-04",
+      "scr-05",
+      "scr-06"
+    ]
+  },
+  {
+    "id": "oper-obj-01",
+    "dominio": "sistemas-en-ejecucion",
+    "oficial": "Boot, reboot, and shut down a system normally",
+    "explicacion": "Reiniciar y apagar correctamente con systemctl reboot / poweroff.",
+    "ejercicios": [
+      "oper-01",
+      "oper-03"
+    ]
+  },
+  {
+    "id": "oper-obj-02",
+    "dominio": "sistemas-en-ejecucion",
+    "oficial": "Boot systems into different targets manually",
+    "explicacion": "Cambiar de target en caliente (systemctl isolate) o desde GRUB (systemd.unit=).",
+    "ejercicios": [
+      "oper-01",
+      "oper-02"
+    ]
+  },
+  {
+    "id": "oper-obj-03",
+    "dominio": "sistemas-en-ejecucion",
+    "oficial": "Interrupt the boot process in order to gain access to a system",
+    "explicacion": "Entrar al sistema sin conocer la contraseña de root interrumpiendo el arranque desde GRUB.",
+    "ejercicios": [
+      "oper-04",
+      "oper-05"
+    ]
+  },
+  {
+    "id": "oper-obj-04",
+    "dominio": "sistemas-en-ejecucion",
+    "oficial": "Identify CPU/memory intensive processes and kill processes",
+    "explicacion": "Encontrar con top/ps los procesos que más consumen y terminarlos con kill/pkill.",
+    "ejercicios": [
+      "oper-06"
+    ]
+  },
+  {
+    "id": "oper-obj-05",
+    "dominio": "sistemas-en-ejecucion",
+    "oficial": "Adjust process scheduling",
+    "explicacion": "Cambiar la prioridad de los procesos con nice y renice.",
+    "ejercicios": [
+      "oper-07",
+      "oper-08"
+    ]
+  },
+  {
+    "id": "oper-obj-06",
+    "dominio": "sistemas-en-ejecucion",
+    "oficial": "Manage tuning profiles",
+    "explicacion": "Ver, recomendar y aplicar perfiles de rendimiento con tuned-adm.",
+    "ejercicios": [
+      "oper-09"
+    ]
+  },
+  {
+    "id": "oper-obj-07",
+    "dominio": "sistemas-en-ejecucion",
+    "oficial": "Locate and interpret system log files and journals",
+    "explicacion": "Leer /var/log y filtrar el journal con journalctl (-u, -p, --since, -b).",
+    "ejercicios": [
+      "oper-11",
+      "oper-12"
+    ]
+  },
+  {
+    "id": "oper-obj-08",
+    "dominio": "sistemas-en-ejecucion",
+    "oficial": "Preserve system journals",
+    "explicacion": "Hacer que el journal se guarde en disco y sobreviva a los reinicios.",
+    "ejercicios": [
+      "oper-10"
+    ]
+  },
+  {
+    "id": "oper-obj-09",
+    "dominio": "sistemas-en-ejecucion",
+    "oficial": "Start, stop, and check the status of network services",
+    "explicacion": "Arrancar, detener y revisar servicios como sshd con systemctl.",
+    "ejercicios": [
+      "oper-13"
+    ]
+  },
+  {
+    "id": "oper-obj-10",
+    "dominio": "sistemas-en-ejecucion",
+    "oficial": "Securely transfer files between systems",
+    "explicacion": "Copiar archivos entre máquinas con scp, sftp o rsync sobre SSH.",
+    "ejercicios": [
+      "oper-14"
+    ]
+  },
+  {
+    "id": "alm-obj-01",
+    "dominio": "almacenamiento-local",
+    "oficial": "List, create, and delete partitions on GPT disks",
+    "explicacion": "Ver, crear y borrar particiones en discos GPT con parted o fdisk.",
+    "ejercicios": [
+      "alm-01",
+      "alm-05",
+      "alm-08",
+      "alm-13"
+    ]
+  },
+  {
+    "id": "alm-obj-02",
+    "dominio": "almacenamiento-local",
+    "oficial": "Create and remove physical volumes",
+    "explicacion": "Preparar discos o particiones para LVM con pvcreate y quitarlos con pvremove.",
+    "ejercicios": [
+      "alm-02",
+      "alm-08",
+      "alm-09"
+    ]
+  },
+  {
+    "id": "alm-obj-03",
+    "dominio": "almacenamiento-local",
+    "oficial": "Assign physical volumes to volume groups",
+    "explicacion": "Crear un grupo de volúmenes (vgcreate) o ampliarlo (vgextend) con PVs.",
+    "ejercicios": [
+      "alm-02",
+      "alm-04",
+      "alm-08"
+    ]
+  },
+  {
+    "id": "alm-obj-04",
+    "dominio": "almacenamiento-local",
+    "oficial": "Create and delete logical volumes",
+    "explicacion": "Crear volúmenes lógicos por tamaño (-L) o extents (-l) y borrarlos con lvremove.",
+    "ejercicios": [
+      "alm-02",
+      "alm-10",
+      "alm-11"
+    ]
+  },
+  {
+    "id": "alm-obj-05",
+    "dominio": "almacenamiento-local",
+    "oficial": "Configure systems to mount file systems at boot by universally unique ID (UUID) or label",
+    "explicacion": "Agregar entradas a /etc/fstab usando UUID= o LABEL= para montar al arrancar.",
+    "ejercicios": [
+      "alm-02",
+      "alm-06"
+    ]
+  },
+  {
+    "id": "alm-obj-06",
+    "dominio": "almacenamiento-local",
+    "oficial": "Add new partitions and logical volumes, and swap to a system non-destructively",
+    "explicacion": "Agregar almacenamiento y swap nuevos sin tocar los datos que ya existen.",
+    "ejercicios": [
+      "alm-03",
+      "alm-07",
+      "alm-08",
+      "alm-12"
+    ]
+  },
+  {
+    "id": "fs-obj-01",
+    "dominio": "sistemas-de-archivos",
+    "oficial": "Create, mount, unmount, and use VFAT, ext4, and XFS file systems",
+    "explicacion": "Formatear con mkfs.vfat / mkfs.ext4 / mkfs.xfs, montar y desmontar.",
+    "ejercicios": [
+      "fs-01",
+      "fs-02",
+      "fs-06"
+    ]
+  },
+  {
+    "id": "fs-obj-02",
+    "dominio": "sistemas-de-archivos",
+    "oficial": "Mount and unmount network file systems using NFS",
+    "explicacion": "Montar carpetas compartidas por NFS a mano y de forma persistente en fstab.",
+    "ejercicios": [
+      "fs-03"
+    ]
+  },
+  {
+    "id": "fs-obj-03",
+    "dominio": "sistemas-de-archivos",
+    "oficial": "Configure autofs",
+    "explicacion": "Hacer que las carpetas NFS se monten solas al entrar en ellas (auto.master.d + mapas).",
+    "ejercicios": [
+      "fs-04",
+      "fs-05"
+    ]
+  },
+  {
+    "id": "fs-obj-04",
+    "dominio": "sistemas-de-archivos",
+    "oficial": "Extend existing logical volumes",
+    "explicacion": "Agrandar un LV y su sistema de archivos sin perder datos (lvextend -r).",
+    "ejercicios": [
+      "fs-06",
+      "fs-07"
+    ]
+  },
+  {
+    "id": "fs-obj-05",
+    "dominio": "sistemas-de-archivos",
+    "oficial": "Diagnose and correct file permission problems",
+    "explicacion": "Resolver por qué alguien no puede leer o escribir: permisos, SGID, sticky bit y ACL.",
+    "ejercicios": [
+      "fs-08",
+      "fs-09",
+      "fs-10",
+      "fs-11"
+    ]
+  },
+  {
+    "id": "desp-obj-01",
+    "dominio": "despliegue-mantenimiento",
+    "oficial": "Schedule tasks using at, cron and systemd timer units",
+    "explicacion": "Programar tareas únicas (at), repetitivas (cron) y con timers de systemd.",
+    "ejercicios": [
+      "desp-01",
+      "desp-02",
+      "desp-03",
+      "desp-04",
+      "desp-05"
+    ]
+  },
+  {
+    "id": "desp-obj-02",
+    "dominio": "despliegue-mantenimiento",
+    "oficial": "Start and stop services and configure services to start automatically at boot",
+    "explicacion": "Controlar servicios con systemctl start/stop y habilitarlos al arranque con enable.",
+    "ejercicios": [
+      "desp-06",
+      "desp-07"
+    ]
+  },
+  {
+    "id": "desp-obj-03",
+    "dominio": "despliegue-mantenimiento",
+    "oficial": "Configure systems to boot into a specific target automatically",
+    "explicacion": "Elegir el target por defecto con systemctl set-default.",
+    "ejercicios": [
+      "desp-08"
+    ]
+  },
+  {
+    "id": "desp-obj-04",
+    "dominio": "despliegue-mantenimiento",
+    "oficial": "Configure time service clients",
+    "explicacion": "Sincronizar la hora con un servidor NTP usando chrony.",
+    "ejercicios": [
+      "desp-09"
+    ]
+  },
+  {
+    "id": "desp-obj-05",
+    "dominio": "despliegue-mantenimiento",
+    "oficial": "Install and update software packages from Red Hat Content Delivery Network, a remote repository, or from the local file system",
+    "explicacion": "Instalar y actualizar con dnf desde los repos de Red Hat, un repo remoto o un .rpm local.",
+    "ejercicios": [
+      "desp-10",
+      "desp-11"
+    ]
+  },
+  {
+    "id": "desp-obj-06",
+    "dominio": "despliegue-mantenimiento",
+    "oficial": "Modify the system bootloader",
+    "explicacion": "Cambiar parámetros del kernel o el kernel por defecto con grubby (y GRUB con grub2-mkconfig).",
+    "ejercicios": [
+      "desp-12",
+      "desp-13"
+    ]
+  },
+  {
+    "id": "red-obj-01",
+    "dominio": "redes",
+    "oficial": "Configure IPv4 and IPv6 addresses",
+    "explicacion": "Poner IP fija IPv4 e IPv6, gateway y DNS con nmcli.",
+    "ejercicios": [
+      "red-01",
+      "red-02",
+      "red-03"
+    ]
+  },
+  {
+    "id": "red-obj-02",
+    "dominio": "redes",
+    "oficial": "Configure hostname resolution",
+    "explicacion": "Configurar el nombre de la máquina (hostnamectl), /etc/hosts y los servidores DNS.",
+    "ejercicios": [
+      "red-01",
+      "red-04",
+      "red-05",
+      "red-06"
+    ]
+  },
+  {
+    "id": "red-obj-03",
+    "dominio": "redes",
+    "oficial": "Configure network services to start automatically at boot",
+    "explicacion": "Hacer que la conexión de red y los servicios de red arranquen solos (autoconnect, enable).",
+    "ejercicios": [
+      "red-09"
+    ]
+  },
+  {
+    "id": "red-obj-04",
+    "dominio": "redes",
+    "oficial": "Restrict network access using firewalld and firewall-cmd",
+    "explicacion": "Permitir solo los servicios y puertos necesarios con firewall-cmd --permanent.",
+    "ejercicios": [
+      "red-07",
+      "red-08"
+    ]
+  },
+  {
+    "id": "usr-obj-01",
+    "dominio": "usuarios-grupos",
+    "oficial": "Create, delete, and modify local user accounts",
+    "explicacion": "Crear, modificar y borrar usuarios con useradd, usermod y userdel.",
+    "ejercicios": [
+      "usr-01",
+      "usr-02",
+      "usr-06",
+      "usr-10"
+    ]
+  },
+  {
+    "id": "usr-obj-02",
+    "dominio": "usuarios-grupos",
+    "oficial": "Change passwords and adjust password aging for local user accounts",
+    "explicacion": "Cambiar contraseñas (passwd) y su caducidad (chage, /etc/login.defs).",
+    "ejercicios": [
+      "usr-03",
+      "usr-04",
+      "usr-09"
+    ]
+  },
+  {
+    "id": "usr-obj-03",
+    "dominio": "usuarios-grupos",
+    "oficial": "Create, delete, and modify local groups and group memberships",
+    "explicacion": "Crear grupos (groupadd) y agregar o quitar miembros (usermod -aG, gpasswd).",
+    "ejercicios": [
+      "usr-01",
+      "usr-07",
+      "usr-08"
+    ]
+  },
+  {
+    "id": "usr-obj-04",
+    "dominio": "usuarios-grupos",
+    "oficial": "Configure privileged access",
+    "explicacion": "Dar permisos de administrador con sudo: grupo wheel o archivos en /etc/sudoers.d.",
+    "ejercicios": [
+      "usr-05",
+      "usr-06"
+    ]
+  },
+  {
+    "id": "seg-obj-01",
+    "dominio": "seguridad",
+    "oficial": "Configure firewall settings using firewall-cmd/firewalld",
+    "explicacion": "Configurar zonas, servicios y puertos de firewalld de forma persistente.",
+    "ejercicios": [
+      "seg-12"
+    ]
+  },
+  {
+    "id": "seg-obj-02",
+    "dominio": "seguridad",
+    "oficial": "Manage default file permissions",
+    "explicacion": "Controlar los permisos con que nacen los archivos nuevos usando umask.",
+    "ejercicios": [
+      "seg-09"
+    ]
+  },
+  {
+    "id": "seg-obj-03",
+    "dominio": "seguridad",
+    "oficial": "Configure key-based authentication for SSH",
+    "explicacion": "Entrar por SSH sin contraseña con ssh-keygen + ssh-copy-id.",
+    "ejercicios": [
+      "seg-10",
+      "seg-11"
+    ]
+  },
+  {
+    "id": "seg-obj-04",
+    "dominio": "seguridad",
+    "oficial": "Set enforcing and permissive modes for SELinux",
+    "explicacion": "Cambiar el modo de SELinux (setenforce) y hacerlo persistente en /etc/selinux/config.",
+    "ejercicios": [
+      "seg-04",
+      "seg-05"
+    ]
+  },
+  {
+    "id": "seg-obj-05",
+    "dominio": "seguridad",
+    "oficial": "List and identify SELinux file and process context",
+    "explicacion": "Ver etiquetas SELinux de archivos (ls -Z) y procesos (ps -eZ).",
+    "ejercicios": [
+      "seg-02",
+      "seg-08"
+    ]
+  },
+  {
+    "id": "seg-obj-06",
+    "dominio": "seguridad",
+    "oficial": "Restore default file contexts",
+    "explicacion": "Devolver a los archivos su etiqueta correcta con restorecon (y semanage fcontext).",
+    "ejercicios": [
+      "seg-01",
+      "seg-02",
+      "seg-03"
+    ]
+  },
+  {
+    "id": "seg-obj-07",
+    "dominio": "seguridad",
+    "oficial": "Manage SELinux port labels",
+    "explicacion": "Permitir que un servicio use un puerto no estándar con semanage port.",
+    "ejercicios": [
+      "seg-01"
+    ]
+  },
+  {
+    "id": "seg-obj-08",
+    "dominio": "seguridad",
+    "oficial": "Use Boolean settings to modify system SELinux settings",
+    "explicacion": "Activar o desactivar comportamientos de SELinux con setsebool -P.",
+    "ejercicios": [
+      "seg-06",
+      "seg-07"
+    ]
+  }
+]

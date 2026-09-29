@@ -77,7 +77,7 @@ hoy=$(date +%F)                          # guarda la salida en una variable
 usuarios=$(awk -F: '$3>=1000 {print $1}' /etc/passwd)
 for u in $usuarios; do echo "Usuario: $u"; done
 
-while read linea; do                     # recorre un archivo línea a línea
+while read -r linea; do                  # recorre un archivo línea a línea
   echo "-> $linea"
 done < /root/lista.txt
 ```
@@ -89,7 +89,7 @@ done < /root/lista.txt
 # busca archivos de más de 30k en /usr/share y los copia a /root/grandes
 mkdir -p /root/grandes
 for f in $(find /usr/share -type f -size +30k 2>/dev/null); do
-  cp "$f" /root/grandes/
+  cp "$f" /root/grandes/     # ojo: $(...) parte por espacios; con nombres raros usa find -exec
 done
 ```
 
@@ -97,7 +97,7 @@ done
 
 - "Crea `/usr/local/bin/buscar` que liste los archivos de `/usr` menores de 10M con permiso SGID": usa `find /usr -type f -size -10M -perm -2000` dentro del script y dale `chmod +x`.
 - "Si el argumento es `a` imprime `b`, si es `b` imprime `a`, si no, muestra el uso y sale con 1": `if`/`elif`/`else` con `exit 1`.
-- "Crea los usuarios listados en `/root/usuarios.txt`": `while read u; do useradd "$u"; done < /root/usuarios.txt`.
+- "Crea los usuarios listados en `/root/usuarios.txt`": `while read -r u; do useradd "$u"; done < /root/usuarios.txt`.
 - "El script debe guardar su resultado en `/root/salida.txt`": redirige con `>` dentro o al llamarlo.
 
 ## Errores típicos

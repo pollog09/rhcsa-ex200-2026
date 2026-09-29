@@ -97,7 +97,7 @@
     ],
     "solucion": "# Si estuviera montada, desmontarla (xfs_admin no funciona con XFS montado)\numount /dev/vdb1 2>/dev/null\n# Poner la etiqueta (no borra datos)\nxfs_admin -L BACKUP /dev/vdb1\n# Comprobar\nblkid /dev/vdb1\n# Punto de montaje\nmkdir -p /backup\n# Entrada en /etc/fstab\necho \"LABEL=BACKUP  /backup  xfs  defaults  0 0\" >> /etc/fstab\nsystemctl daemon-reload\nmount -a",
     "verificacion": "lsblk -f /dev/vdb1          # LABEL = BACKUP\ngrep BACKUP /etc/fstab\numount /backup && mount -a\nfindmnt /backup             # SOURCE /dev/vdb1, FSTYPE xfs\nls /backup                  # los datos siguen ahí\n# Reinicia y confirma con findmnt /backup",
-    "explicacion": "`xfs_admin -L` solo cambia la etiqueta, no toca los datos. Si el sistema de archivos fuera ext4 usarías `e2label /dev/vdb1 BACKUP` (que sí funciona montado). Un error típico es repetir la misma etiqueta en dos dispositivos: el montaje por LABEL se vuelve ambiguo."
+    "explicacion": "`xfs_admin -L` solo cambia la etiqueta, no toca los datos. Para ext4 usarías `e2label /dev/vdb1 BACKUP` (funciona montado) y para VFAT `fatlabel`. Un error típico es repetir la misma etiqueta en dos dispositivos: el montaje por LABEL se vuelve ambiguo."
   },
   {
     "dominio": "almacenamiento-local",
@@ -121,13 +121,13 @@
     "id": "alm-08",
     "dificultad": "media",
     "titulo": "Ampliar un VG con una partición nueva",
-    "enunciado": "El grupo de volúmenes **appvg** se ha quedado sin espacio libre. Tienes un disco nuevo **/dev/vdc** que ya tiene tabla **GPT** pero ninguna partición.\n\n1. Crea con **gdisk** (o fdisk) una partición **/dev/vdc1** de **2 GiB** de tipo **Linux LVM**.\n2. Conviértela en volumen físico.\n3. Añádela a **appvg** sin afectar a los LVs existentes.",
+    "enunciado": "El grupo de volúmenes **appvg** se ha quedado sin espacio libre. Tienes un disco nuevo **/dev/vdc** que ya tiene tabla **GPT** pero ninguna partición.\n\n1. Crea con **fdisk** (o parted) una partición **/dev/vdc1** de **2 GiB** de tipo **Linux LVM**.\n2. Conviértela en volumen físico.\n3. Añádela a **appvg** sin afectar a los LVs existentes.",
     "pistas": [
-      "En gdisk el código de tipo Linux LVM es `8e00`. En fdisk (con GPT) puedes cambiar el tipo con `t` y escribir `lvm`.",
-      "Para escribir los cambios: `w` (en gdisk confirma con `Y`).",
+      "En fdisk: `n` crea la partición y `t` cambia el tipo; con GPT puedes escribir el alias `lvm`. gdisk no viene en RHEL 10.",
+      "Con fdisk los cambios no se guardan hasta que pulsas `w`.",
       "El comando que añade un PV a un VG existente es `vgextend`."
     ],
-    "solucion": "# Crear la partición de forma interactiva con gdisk\ngdisk /dev/vdc\n#   n        -> nueva partición\n#   <Enter>  -> número 1\n#   <Enter>  -> primer sector por defecto\n#   +2G      -> tamaño\n#   8e00     -> tipo Linux LVM\n#   w, Y     -> escribir y confirmar\n#\n# Alternativa con fdisk: n, <Enter>, <Enter>, +2G, t, lvm, w\n\n# Asegurar que el kernel ve la partición\npartprobe /dev/vdc\nudevadm settle\n\n# Crear el PV y ampliar el VG\npvcreate /dev/vdc1\nvgextend appvg /dev/vdc1",
+    "solucion": "# Crear la partición de forma interactiva con fdisk\nfdisk /dev/vdc\n#   n        -> nueva partición\n#   <Enter>  -> número 1\n#   <Enter>  -> primer sector por defecto\n#   +2G      -> tamaño\n#   t        -> cambiar el tipo (elige la partición 1 sola)\n#   lvm      -> alias de \"Linux LVM\"\n#   w        -> escribir y salir\n#\n# Alternativa con parted:\n#   parted -s /dev/vdc mkpart lvm2 1MiB 2049MiB && parted -s /dev/vdc set 1 lvm on\n\n# Asegurar que el kernel ve la partición\npartprobe /dev/vdc\nudevadm settle\n\n# Crear el PV y ampliar el VG\npvcreate /dev/vdc1\nvgextend appvg /dev/vdc1",
     "verificacion": "lsblk /dev/vdc              # vdc1 de 2G\npvs                         # /dev/vdc1 pertenece a appvg\nvgs appvg                   # VFree ahora ~2 GiB\nlvs appvg                   # los LVs existentes siguen igual\n# LVM guarda sus metadatos en disco: tras reiniciar, vgs debe mostrar lo mismo",
     "explicacion": "`vgextend` solo suma espacio al VG; no toca los LVs ni sus datos. Si olvidas `pvcreate`, vgextend lo hace automáticamente en versiones recientes, pero es buena costumbre hacerlo explícitamente. El tipo de partición LVM es informativo, pero ayuda a identificarla."
   },

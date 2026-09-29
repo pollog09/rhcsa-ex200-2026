@@ -106,14 +106,14 @@
     "tipo": "opcion",
     "dificultad": "facil",
     "titulo": "La opción -P de setsebool",
-    "enunciado": "¿Cuál es la diferencia entre `setsebool ftpd_anon_write on` y `setsebool -P ftpd_anon_write on`?",
+    "enunciado": "¿Cuál es la diferencia entre `setsebool httpd_can_network_connect on` y `setsebool -P httpd_can_network_connect on`?",
     "pistas": [],
     "solucion": "",
     "verificacion": "",
     "explicacion": "`-P` significa persistente: escribe el valor en la política en disco. Por eso tarda algo más que sin `-P`. En el examen, casi siempre se pide que los cambios sobrevivan al reinicio, así que usa `-P`.",
     "opciones": [
       "Con -P el cambio se guarda en la política y se mantiene tras reiniciar; sin -P se pierde al reiniciar",
-      "Con -P el cambio se aplica solo al proceso ftpd que está en ejecución",
+      "Con -P el cambio se aplica solo al proceso httpd que está en ejecución",
       "Sin -P el comando falla si SELinux está en enforcing",
       "Con -P se imprime el valor anterior (print); el efecto es el mismo"
     ],
@@ -151,7 +151,7 @@
     ],
     "solucion": "# Añade la umask al ~/.bashrc de alex\necho \"umask 027\" >> /home/alex/.bashrc\n\n# (Para TODOS los usuarios se usaría, por ejemplo:\n#  echo \"umask 027\" > /etc/profile.d/umask.sh)",
     "verificacion": "# Debe mostrar 0027\nsu - alex -c umask\n# Crea un archivo y un directorio de prueba como alex\nsu - alex -c 'touch prueba.txt; mkdir prueba.d; ls -ld prueba.txt prueba.d'\n# Esperado: -rw-r----- ... prueba.txt  y  drwxr-x--- ... prueba.d\nsu - alex -c 'rm -rf prueba.txt prueba.d'",
-    "explicacion": "La umask indica qué permisos se **quitan**: los archivos parten de 666 y los directorios de 777, así que con 027 quedan 640 y 750. El comando `umask` solo en la terminal se pierde al cerrar sesión; hay que ponerlo en un archivo que se lea al iniciar sesión. `~/.bash_profile` carga `~/.bashrc`, por eso funciona tanto en sesiones de login como en terminales nuevas."
+    "explicacion": "En RHEL 10 la umask por defecto es 0022 (valor `UMASK` de `/etc/login.defs`). La umask indica qué permisos se **quitan**: los archivos parten de 666 y los directorios de 777, así que con 027 quedan 640 y 750. El comando `umask` solo en la terminal se pierde al cerrar sesión; hay que ponerlo en un archivo que se lea al iniciar sesión. `~/.bash_profile` carga `~/.bashrc`, por eso funciona tanto en sesiones de login como en terminales nuevas."
   },
   {
     "id": "seg-10",
@@ -182,7 +182,7 @@
     ],
     "solucion": "cat > /etc/ssh/sshd_config.d/00-seguridad.conf <<'EOF'\nPermitRootLogin no\nPasswordAuthentication no\nEOF\n\n# Comprueba la sintaxis antes de reiniciar\nsshd -t\n\n# Aplica los cambios\nsystemctl restart sshd",
     "verificacion": "# Configuración efectiva: permitrootlogin no / passwordauthentication no\nsshd -T | grep -Ei '^(permitrootlogin|passwordauthentication) '\nsystemctl is-active sshd\nsystemctl is-enabled sshd\n# Desde servera: debe fallar con \"Permission denied (publickey...)\"\nssh -o PubkeyAuthentication=no -o PreferredAuthentications=password operador@serverb\n# Desde servera: con clave debe seguir funcionando\nssh -o BatchMode=yes operador@serverb hostname",
-    "explicacion": "`/etc/ssh/sshd_config` incluye `/etc/ssh/sshd_config.d/*.conf` al principio, y en sshd gana el primer valor leído. Si el instalador creó un archivo como `01-permitrootlogin.conf`, tu `00-seguridad.conf` se lee antes y tiene prioridad. `sshd -T` es la forma fiable de ver qué valor se aplica realmente."
+    "explicacion": "`/etc/ssh/sshd_config` incluye `/etc/ssh/sshd_config.d/*.conf` al principio, y en sshd gana el primer valor leído. Si el instalador creó un archivo como `01-permitrootlogin.conf`, tu `00-seguridad.conf` se lee antes y tiene prioridad. En RHEL 10 el valor por defecto de `PermitRootLogin` es `prohibit-password` (root puede entrar con clave pero no con contraseña), por eso hay que ponerlo en `no`. `sshd -T` es la forma fiable de ver qué valor se aplica realmente."
   },
   {
     "id": "seg-12",
@@ -197,7 +197,7 @@
       "Comprueba ambas zonas con --list-all."
     ],
     "solucion": "# Asocia la red de origen a la zona internal\nfirewall-cmd --permanent --zone=internal --add-source=192.168.50.0/24\n\n# Permite MariaDB/MySQL (3306/tcp) solo en esa zona\nfirewall-cmd --permanent --zone=internal --add-service=mysql\n\n# Por si acaso, asegúrate de que public no lo permite\nfirewall-cmd --permanent --zone=public --remove-service=mysql\n\nfirewall-cmd --reload",
-    "verificacion": "# sources: 192.168.50.0/24 y services: ... mysql\nfirewall-cmd --zone=internal --list-all\n# mysql NO debe aparecer\nfirewall-cmd --zone=public --list-services\n# Zonas activas y lo que las activa\nfirewall-cmd --get-active-zones\n# Comprobación de la configuración permanente\nfirewall-cmd --permanent --zone=internal --list-all",
+    "verificacion": "# sources: 192.168.50.0/24 y services: ... mysql\nfirewall-cmd --zone=internal --list-all\n# mysql NO debe aparecer\nfirewall-cmd --zone=public --list-services\n# Zonas activas y lo que las activa\nfirewall-cmd --get-active-zones\n# Comprobación de la configuración permanente\nfirewall-cmd --permanent --zone=internal --list-all\nfirewall-cmd --permanent --zone=public --list-services   # sin mysql: sobrevive al reinicio",
     "explicacion": "firewalld decide la zona de cada paquete primero por la dirección de origen y, si no coincide ninguna, por la interfaz. Así, los equipos de `192.168.50.0/24` usan las reglas de `internal` y el resto sigue usando `public`. Quitar `mysql` de `public` puede dar un aviso \"NOT_ENABLED\" si no estaba; es normal."
   }
 ]

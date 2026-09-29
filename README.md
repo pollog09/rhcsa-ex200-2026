@@ -8,6 +8,7 @@ Complementa el curso [Distriib/curso-linux](https://github.com/Distriib/curso-li
 
 | Sección | Contenido |
 |---|---|
+| **Objetivos** (`/objetivos`) | Checklist de los 62 objetivos oficiales de Red Hat, cada uno con su explicación y sus ejercicios |
 | **Temas** (`/temas`) | Los 10 dominios oficiales del EX200. Cada uno trae "en palabras simples", comandos clave, cómo lo piden en el examen, errores típicos y un mini quiz |
 | **Comandos** (`/comandos`) | Chuleta de 200+ comandos con ejemplos, buscador y botón de copiar |
 | **Práctica** (`/practica`) | Tareas estilo examen con pistas progresivas, solución y verificación, filtrables por tema y dificultad |
@@ -22,6 +23,8 @@ En total hay **111 ejercicios originales** en `data/preguntas/`: 78 tareas prác
 También se incluyen dos archivos para leer sin el sitio:
 - [`RESUMEN-EX200.md`](RESUMEN-EX200.md): resumen de una página.
 - [`COMANDOS.md`](COMANDOS.md): todos los comandos en tablas.
+- [`docs/COBERTURA-EX200.md`](docs/COBERTURA-EX200.md): matriz objetivo oficial → tema → ejercicios.
+- [`docs/AUDITORIA-2026-09.md`](docs/AUDITORIA-2026-09.md): validación contra el temario oficial de RHEL 10 y cambios aplicados.
 
 ---
 
@@ -44,6 +47,8 @@ docker compose logs -f            # ver los logs
 docker compose down               # detener y borrar el contenedor
 docker compose up -d --build      # reconstruir después de cambiar el contenido
 ```
+
+> Si usas el antiguo `docker-compose` (v1) y al reconstruir aparece `KeyError: 'ContainerConfig'`, ejecuta primero `docker-compose down` y luego `docker-compose up -d --build`.
 
 Sin Compose:
 
@@ -162,6 +167,7 @@ scripts/                Validación de preguntas y generación de COMANDOS.md
 - **Un tema:** edita `content/temas/NN-<dominio>.md`.
 - **Una pregunta:** agrégala al JSON de su dominio siguiendo [`ESQUEMA.md`](data/preguntas/ESQUEMA.md). Después, en `scripts/validate-preguntas.ts`, cambia `ESPERADAS` por el nuevo total.
 - **Un comando:** agrégalo a `data/comandos.json` y ejecuta `npm run comandos:md` para regenerar `COMANDOS.md`.
+- **Objetivos oficiales:** están en `data/objetivos.json`. Si Red Hat cambia el temario, actualízalo y ejecuta `npm run cobertura:md`. `npm run validate` falla si algún objetivo se queda sin ejercicio.
 
 ```bash
 npm run validate      # valida todas las preguntas (también se ejecuta antes de cada build)

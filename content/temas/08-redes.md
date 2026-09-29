@@ -36,14 +36,17 @@ nmcli con up estatica
 # modificar un perfil existente:
 nmcli con mod "Wired connection 1" ipv4.addresses 10.0.0.5/24 ipv4.method manual
 nmcli con mod estatica +ipv4.addresses 192.168.10.21/24   # segunda IP
+ls /etc/NetworkManager/system-connections/   # perfiles en formato keyfile (*.nmconnection)
 ```
+
+En RHEL 10 los perfiles son keyfiles. El formato `ifcfg` de `/etc/sysconfig/network-scripts/` ya no se admite: NetworkManager lo ignora.
 
 ### IPv6
 
 ```bash
 nmcli con mod estatica ipv6.method manual \
-  ipv6.addresses 2001:db8::20/64 ipv6.gateway 2001:db8::1
-nmcli con up estatica
+  ipv6.addresses 2001:db8::20/64 ipv6.gateway 2001:db8::1 ipv6.dns 2001:db8::1
+nmcli con up estatica               # la IPv4 del perfil no cambia
 ip -6 addr show enp1s0
 ping -6 -c2 2001:db8::1
 ```
@@ -51,13 +54,13 @@ ping -6 -c2 2001:db8::1
 ### Hostname y resolución de nombres
 
 ```bash
-hostnamectl set-hostname servidor1.ejemplo.com   # persistente
+hostnamectl set-hostname servidor1.ejemplo.com   # persistente (/etc/hostname)
 hostnamectl                                     # comprueba
 echo "192.168.10.30 srv2.ejemplo.com srv2" >> /etc/hosts
 nmcli con mod estatica ipv4.dns "8.8.8.8 1.1.1.1" ipv4.dns-search ejemplo.com
 nmcli con up estatica
 cat /etc/resolv.conf              # lo escribe NetworkManager
-getent hosts srv2                 # resuelve usando hosts y DNS
+getent hosts srv2                 # resuelve usando hosts y DNS (orden en /etc/nsswitch.conf)
 dig +short redhat.com             # consulta DNS (paquete bind-utils)
 ```
 
@@ -78,6 +81,7 @@ firewall-cmd --permanent --add-service=http      # abre un servicio
 firewall-cmd --permanent --add-port=8080/tcp     # abre un puerto
 firewall-cmd --permanent --remove-service=cockpit
 firewall-cmd --reload                            # aplica lo permanente
+firewall-cmd --permanent --zone=internal --add-service=ssh   # en otra zona
 firewall-cmd --get-services | tr ' ' '\n' | grep nfs   # nombres válidos
 ```
 
@@ -93,6 +97,7 @@ firewall-cmd --get-services | tr ' ' '\n' | grep nfs   # nombres válidos
 - Cambiar la IP sin `nmcli con up`: el cambio queda guardado pero no aplicado.
 - Olvidar `ipv4.method manual`: el perfil sigue pidiendo IP por DHCP.
 - Editar `/etc/resolv.conf` a mano: NetworkManager lo sobrescribe.
+- Crear archivos `ifcfg-*`: en RHEL 10 no funcionan; usa `nmcli` o `nmtui`.
 - Olvidar `--permanent` en `firewall-cmd`: se pierde al reiniciar; o usarlo sin `--reload` y no ver el cambio.
 - Cortarte la conexión SSH al cambiar la IP por red: hazlo desde la consola.
 

@@ -36,7 +36,7 @@
 | `wc` | Cuenta líneas, palabras o bytes | `wc -l /etc/passwd` |
 | `head` | Muestra las primeras líneas | `head -n 5 /etc/passwd` |
 | `tail` | Muestra las últimas líneas o sigue un archivo | `tail -f /var/log/secure` |
-| `tar` | Empaqueta y comprime archivos | `tar -czf /root/etc.tar.gz /etc` |
+| `tar` | Empaqueta y comprime (-z gzip, -j bzip2) o extrae (-x) | `tar -czf /root/etc.tar.gz /etc` |
 | `gzip` | Comprime un archivo con gzip | `gzip /tmp/informe.txt` |
 | `bzip2` | Comprime un archivo con bzip2 | `bzip2 /tmp/informe.txt` |
 | `chmod` | Cambia los permisos de un archivo | `chmod 750 script.sh` |
@@ -45,6 +45,10 @@
 | `ssh` | Abre una sesión remota segura | `ssh ana@servidor1` |
 | `vim` | Edita archivos de texto | `vim /etc/hosts` |
 | `man` | Abre el manual de un comando | `man -k partition` |
+| `tar -x` | Extrae un archivo tar en otra carpeta | `tar -xjf /root/etc.tar.bz2 -C /tmp/restaurado` |
+| `gunzip / bunzip2` | Descomprime archivos .gz o .bz2 | `bunzip2 /tmp/informe.txt.bz2` |
+| `mandb` | Regenera el índice que usa man -k | `mandb && man -k password` |
+| `info` | Abre la documentación en formato info | `info coreutils` |
 
 <a id="software"></a>
 
@@ -59,17 +63,18 @@
 | `dnf provides` | Indica qué paquete trae un archivo | `dnf provides "*/semanage"` |
 | `dnf repolist` | Lista los repositorios habilitados | `dnf repolist -v` |
 | `dnf history` | Muestra y deshace transacciones | `dnf history undo 5` |
-| `dnf config-manager` | Agrega un repositorio por URL | `dnf config-manager --add-repo http://repo.ejemplo.com/BaseOS` |
+| `dnf config-manager` | Agrega, habilita o deshabilita repositorios (dnf 4 en RHEL 10) | `dnf config-manager --add-repo http://repo.ejemplo.com/BaseOS` |
 | `dnf clean` | Limpia la caché de repositorios | `dnf clean all` |
 | `rpm -qa` | Lista los paquetes instalados | `rpm -qa \| grep httpd` |
 | `rpm -qi` | Muestra información de un paquete instalado | `rpm -qi openssh-server` |
 | `rpm -ql` | Lista los archivos de un paquete | `rpm -ql httpd` |
 | `rpm -qf` | Indica a qué paquete pertenece un archivo | `rpm -qf /etc/ssh/sshd_config` |
-| `flatpak remote-add` | Agrega un repositorio Flatpak | `flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo` |
+| `flatpak remote-add` | Agrega un repositorio Flatpak (rhel es el remoto oficial de Red Hat) | `flatpak remote-add --if-not-exists rhel https://flatpaks.redhat.io/rhel.flatpakrepo` |
 | `flatpak remotes` | Lista los repositorios Flatpak | `flatpak remotes` |
-| `flatpak install` | Instala una aplicación Flatpak | `flatpak install -y flathub org.gnome.Calculator` |
+| `flatpak install` | Instala una aplicación Flatpak | `flatpak install -y rhel org.gnome.Calculator` |
 | `flatpak list` | Lista las aplicaciones Flatpak instaladas | `flatpak list --app` |
 | `flatpak uninstall` | Desinstala una aplicación Flatpak | `flatpak uninstall -y org.gnome.Calculator` |
+| `flatpak remote-ls` | Lista las aplicaciones de un remoto Flatpak | `flatpak remote-ls --app rhel` |
 
 <a id="scripts"></a>
 
@@ -114,13 +119,14 @@
 | `kill` | Envía una señal a un proceso | `kill -9 1234` |
 | `pkill` | Termina procesos por nombre o usuario | `pkill -u ana` |
 | `nice` | Arranca un proceso con otra prioridad | `nice -n 10 tar -czf /tmp/b.tgz /usr` |
-| `renice` | Cambia la prioridad de un proceso en marcha | `renice -n 5 -p 1234` |
+| `renice` | Fija el nice de un proceso en marcha (bajarlo requiere root) | `renice -n 5 -p 1234` |
 | `tuned-adm` | Aplica perfiles de rendimiento | `tuned-adm profile virtual-guest` |
 | `journalctl` | Consulta los logs del journal | `journalctl -u sshd -p err -b` |
-| `Storage=persistent` | Guarda el journal en disco | `printf "[Journal]\nStorage=persistent\n" > /etc/systemd/journald.conf.d/persist.conf` |
+| `Storage=persistent` | Guarda el journal en /var/log/journal (por defecto va a /run y se pierde) | `printf "[Journal]\nStorage=persistent\n" > /etc/systemd/journald.conf.d/persist.conf` |
 | `scp` | Copia archivos por SSH | `scp /root/a.txt ana@srv2:/tmp/` |
 | `sftp` | Transfiere archivos en sesión interactiva por SSH | `sftp ana@srv2` |
 | `rsync` | Sincroniza archivos de forma incremental | `rsync -avz /datos/ ana@srv2:/respaldo/` |
+| `journalctl --list-boots` | Lista los arranques guardados en el journal | `journalctl --list-boots` |
 
 <a id="almacenamiento-local"></a>
 
@@ -133,7 +139,7 @@
 | `parted` | Crea y muestra particiones | `parted /dev/vdb mkpart datos xfs 1MiB 1GiB` |
 | `parted mklabel` | Crea una tabla de particiones GPT | `parted /dev/vdb mklabel gpt` |
 | `fdisk` | Particiona un disco de forma interactiva | `fdisk /dev/vdb` |
-| `gdisk` | Particiona discos GPT de forma interactiva | `gdisk /dev/vdb` |
+| `parted rm` | Borra una partición por su número (gdisk no viene en RHEL 10) | `parted /dev/vdb rm 3` |
 | `udevadm settle` | Espera a que el sistema detecte las particiones nuevas | `udevadm settle` |
 | `pvcreate` | Crea un volumen físico LVM | `pvcreate /dev/vdb2` |
 | `vgcreate` | Crea un grupo de volúmenes | `vgcreate -s 16M vgdatos /dev/vdb2` |
@@ -142,10 +148,12 @@
 | `vgdisplay` | Muestra el detalle de un VG | `vgdisplay vgdatos` |
 | `lvremove` | Borra un volumen lógico | `lvremove -y /dev/vgdatos/lvdatos` |
 | `vgremove` | Borra un grupo de volúmenes | `vgremove vgdatos` |
+| `vgreduce` | Saca un PV vacío de un grupo de volúmenes | `pvmove /dev/vdb1 && vgreduce vgdatos /dev/vdb1` |
 | `pvremove` | Quita la marca LVM de un dispositivo | `pvremove /dev/vdb2` |
 | `mkswap` | Prepara un dispositivo como swap | `mkswap /dev/vdb3` |
 | `swapon` | Activa la swap | `swapon -a && swapon --show` |
 | `mount -a` | Monta todo lo que está en fstab | `mount -a` |
+| `xfs_admin -L / e2label` | Pone una etiqueta (LABEL) a un XFS desmontado o a un ext4 | `xfs_admin -L BACKUP /dev/vdb1 ; e2label /dev/vdb2 datos` |
 | `findmnt` | Muestra montajes y valida fstab | `findmnt --verify` |
 | `systemctl daemon-reload` | Hace que systemd relea fstab y unidades | `systemctl daemon-reload` |
 
@@ -155,9 +163,9 @@
 
 | Comando | Para qué sirve | Ejemplo |
 |---|---|---|
-| `mkfs.xfs` | Crea un sistema de archivos XFS | `mkfs.xfs /dev/vdb1` |
+| `mkfs.xfs` | Crea un sistema de archivos XFS (mínimo ~300 MiB) | `mkfs.xfs /dev/vdb1` |
 | `mkfs.ext4` | Crea un sistema de archivos ext4 | `mkfs.ext4 -L backup /dev/vdb2` |
-| `mkfs.vfat` | Crea un sistema de archivos VFAT | `mkfs.vfat /dev/vdb3` |
+| `mkfs.vfat` | Crea un VFAT con etiqueta (paquete dosfstools) | `mkfs.vfat -n USB /dev/vdb3` |
 | `mount` | Monta un sistema de archivos | `mount /dev/vdb1 /mnt/xfs` |
 | `umount` | Desmonta un sistema de archivos | `umount /mnt/xfs` |
 | `df` | Muestra espacio usado y tipo de cada montaje | `df -hT` |
@@ -197,9 +205,10 @@
 | `timedatectl` | Muestra y ajusta hora y zona horaria | `timedatectl set-timezone America/Santiago` |
 | `subscription-manager` | Registra el sistema en el CDN de Red Hat | `subscription-manager register` |
 | `dnf install ./` | Instala un RPM desde un archivo local | `dnf install -y ./herramienta.rpm` |
-| `grubby` | Cambia el kernel y sus opciones de arranque | `grubby --update-kernel=ALL --args="quiet"` |
+| `grubby` | Cambia las opciones del kernel en las entradas BLS (persistente) | `grubby --update-kernel=ALL --args="quiet"` |
 | `grubby --default-kernel` | Muestra el kernel por defecto | `grubby --default-kernel` |
-| `grub2-mkconfig` | Regenera la configuración de GRUB | `grub2-mkconfig -o /boot/grub2/grub.cfg` |
+| `grub2-mkconfig` | Regenera grub.cfg (misma ruta en BIOS y UEFI); con --update-bls-cmdline aplica GRUB_CMDLINE_LINUX | `grub2-mkconfig -o /boot/grub2/grub.cfg --update-bls-cmdline` |
+| `timedatectl set-ntp` | Activa o desactiva la sincronización NTP | `timedatectl set-ntp true` |
 
 <a id="redes"></a>
 
@@ -226,6 +235,7 @@
 | `firewall-cmd --add-port` | Abre un puerto en el firewall | `firewall-cmd --permanent --add-port=8080/tcp` |
 | `firewall-cmd --reload` | Aplica la configuración permanente | `firewall-cmd --reload` |
 | `firewall-cmd --list-all` | Muestra la configuración de la zona | `firewall-cmd --list-all` |
+| `/etc/NetworkManager/system-connections/` | Perfiles de red en formato keyfile (ifcfg ya no se admite en RHEL 10) | `ls /etc/NetworkManager/system-connections/` |
 
 <a id="usuarios-grupos"></a>
 
@@ -254,6 +264,9 @@
 | `getent group` | Muestra los miembros de un grupo | `getent group ventas` |
 | `visudo` | Edita sudoers validando la sintaxis | `visudo -f /etc/sudoers.d/admins` |
 | `sudo -l` | Muestra qué puede hacer un usuario con sudo | `sudo -l -U ana` |
+| `passwd --stdin` | Asigna una contraseña sin preguntar | `echo "Clave2026" \| passwd --stdin ana` |
+| `visudo -c` | Valida la sintaxis de todos los archivos sudoers | `visudo -c` |
+| `useradd -D` | Muestra los valores por defecto de useradd | `useradd -D` |
 
 <a id="seguridad"></a>
 
@@ -264,7 +277,7 @@
 | `firewall-cmd --get-active-zones` | Muestra las zonas activas | `firewall-cmd --get-active-zones` |
 | `firewall-cmd --add-source` | Asigna una red de origen a una zona | `firewall-cmd --permanent --zone=internal --add-source=192.168.56.0/24` |
 | `firewall-cmd --remove-service` | Cierra un servicio en el firewall | `firewall-cmd --permanent --remove-service=cockpit` |
-| `umask` | Muestra o cambia la máscara de permisos | `umask 077` |
+| `umask` | Muestra o cambia la máscara de permisos (por defecto 0022, UMASK en /etc/login.defs) | `umask 077` |
 | `ssh-keygen` | Crea un par de llaves SSH | `ssh-keygen -t ed25519` |
 | `ssh-copy-id` | Copia la llave pública a otro servidor | `ssh-copy-id ana@servidor2` |
 | `sshd -t` | Valida la configuración de SSH | `sshd -t && systemctl reload sshd` |
@@ -283,3 +296,4 @@
 | `semanage boolean -l` | Lista booleanos con su descripción | `semanage boolean -l \| grep home` |
 | `ausearch` | Busca denegaciones en el log de auditoría | `ausearch -m AVC -ts recent` |
 | `sealert` | Explica una denegación y sugiere solución | `sealert -a /var/log/audit/audit.log` |
+| `/etc/ssh/sshd_config.d/` | Drop-ins de sshd; gana el primer valor leído (PermitRootLogin por defecto: prohibit-password) | `echo "PermitRootLogin no" > /etc/ssh/sshd_config.d/00-examen.conf` |

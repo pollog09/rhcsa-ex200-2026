@@ -16,7 +16,7 @@ const RUTA = [
 ];
 
 const PASOS = [
-  { href: "/temas", titulo: "1. Lee el tema", texto: "Resúmenes cortos y en palabras simples de cada objetivo oficial." },
+  { href: "/temas", titulo: "1. Lee el tema", texto: "Resúmenes cortos y en palabras simples de cada dominio oficial." },
   { href: "/comandos", titulo: "2. Ten la chuleta a mano", texto: "Comandos con ejemplos listos para copiar, con buscador." },
   { href: "/practica", titulo: "3. Practica en tu VM", texto: "Tareas estilo examen con pistas, solución y verificación." },
   { href: "/quiz", titulo: "4. Repasa con el quiz", texto: "Preguntas de opción múltiple que te corrigen al instante." },
@@ -40,6 +40,9 @@ export default function Home() {
         </p>
         <div className="flex flex-wrap gap-3 mt-6">
           <BotonLink href="/temas">Empezar a estudiar</BotonLink>
+          <BotonLink href="/objetivos" secundario>
+            Ver objetivos oficiales
+          </BotonLink>
           <BotonLink href="/simulacro" secundario>
             Hacer un simulacro
           </BotonLink>

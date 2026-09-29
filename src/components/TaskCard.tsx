@@ -28,7 +28,7 @@ export default function TaskCard({
   const hecha = !!progreso.tareas[p.id];
 
   return (
-    <article className={`bg-panel border rounded-xl p-5 ${hecha && !modoExamen ? "border-ok" : "border-line"}`}>
+    <article id={p.id} className={`scroll-mt-20 bg-panel border rounded-xl p-5 ${hecha && !modoExamen ? "border-ok" : "border-line"}`}>
       <div className="flex flex-wrap items-center gap-2 mb-2">
         {numero !== undefined && <span className="font-mono text-sm text-muted">#{numero}</span>}
         <Badge>{tituloDominio(p.dominio)}</Badge>

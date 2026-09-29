@@ -6,11 +6,12 @@ import { useSyncExternalStore } from "react";
 export type Progreso = {
   tareas: Record<string, boolean>; // id -> marcada como hecha
   quiz: Record<string, boolean>; // id -> ¿acertó la última vez?
+  objetivos: Record<string, boolean>; // objetivo oficial -> marcado como dominado
   simulacros: { fecha: string; puntaje: number; aprobado: boolean }[];
 };
 
 const CLAVE = "ex200-progreso-v1";
-const VACIO: Progreso = { tareas: {}, quiz: {}, simulacros: [] };
+const VACIO: Progreso = { tareas: {}, quiz: {}, objetivos: {}, simulacros: [] };
 
 let cache: Progreso | null = null;
 const oyentes = new Set<() => void>();
@@ -48,6 +49,11 @@ export function useProgreso(): Progreso {
 export function marcarTarea(id: string, hecha: boolean) {
   const p = leer();
   escribir({ ...p, tareas: { ...p.tareas, [id]: hecha } });
+}
+
+export function marcarObjetivo(id: string, dominado: boolean) {
+  const p = leer();
+  escribir({ ...p, objetivos: { ...p.objetivos, [id]: dominado } });
 }
 
 export function registrarQuiz(id: string, acierto: boolean) {

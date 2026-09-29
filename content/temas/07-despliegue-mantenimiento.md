@@ -68,8 +68,8 @@ systemctl enable --now httpd        # arranca ahora y en cada inicio
 systemctl disable --now cups        # lo contrario
 systemctl is-enabled httpd
 systemctl mask telnet.socket        # impide que se inicie
-systemctl set-default multi-user.target   # arranque en modo texto
-systemctl get-default
+systemctl set-default multi-user.target   # arranque en modo texto (persistente)
+systemctl get-default               # set-default cambia el enlace /etc/systemd/system/default.target
 ```
 
 ### chrony como cliente NTP
@@ -82,6 +82,7 @@ systemctl enable --now chronyd ; systemctl restart chronyd
 chronyc sources -v                  # '^*' indica el servidor en uso
 timedatectl                         # "System clock synchronized: yes"
 timedatectl set-timezone America/Santiago
+timedatectl set-ntp true            # activa la sincronización NTP (usa chronyd)
 ```
 
 ### Instalar desde CDN, repo remoto o archivo local
@@ -100,9 +101,13 @@ grubby --info=ALL | grep -E '^(index|kernel)'    # kernels disponibles
 grubby --set-default /boot/vmlinuz-<versión>
 grubby --update-kernel=ALL --args="quiet"        # agrega opción a todos
 grubby --update-kernel=ALL --remove-args="rhgb"  # quita una opción
+# grubby edita las entradas BLS de /boot/loader/entries/: no hace falta regenerar nada
 vim /etc/default/grub                            # p. ej. GRUB_TIMEOUT=10
-grub2-mkconfig -o /boot/grub2/grub.cfg           # regenera tras editar
+grub2-mkconfig -o /boot/grub2/grub.cfg           # regenera tras editar (misma ruta en BIOS y UEFI)
+grub2-mkconfig -o /boot/grub2/grub.cfg --update-bls-cmdline   # si cambiaste GRUB_CMDLINE_LINUX
 ```
+
+En RHEL 10 usa `grubby` para opciones del kernel. `/etc/default/grub` sirve para ajustes de GRUB como `GRUB_TIMEOUT`; si cambias `GRUB_CMDLINE_LINUX`, sin `--update-bls-cmdline` las entradas BLS no cambian.
 
 ## Así lo piden en el examen
 
@@ -117,7 +122,7 @@ grub2-mkconfig -o /boot/grub2/grub.cfg           # regenera tras editar
 - Habilitar el `.service` en lugar del `.timer`.
 - Iniciar un servicio sin `enable`: tras el reinicio queda apagado.
 - Dejar las líneas `pool` antiguas en chrony junto a la nueva, o no reiniciar `chronyd`.
-- Editar `/etc/default/grub` sin regenerar con `grub2-mkconfig`.
+- Editar `/etc/default/grub` sin regenerar con `grub2-mkconfig`, o usar `/boot/efi/EFI/redhat/grub.cfg` (en RHEL 10 ese archivo solo apunta al de `/boot/grub2/`).
 
 ## Chequeo rápido
 

@@ -23,15 +23,16 @@ firewall-cmd --get-active-zones
 firewall-cmd --permanent --add-service=https
 firewall-cmd --permanent --add-port=82/tcp
 firewall-cmd --permanent --zone=internal --add-source=192.168.56.0/24
-firewall-cmd --reload
+firewall-cmd --reload              # sin --permanent el cambio se pierde al recargar o reiniciar
 firewall-cmd --list-all
 ```
 
 ### umask
 
 ```bash
-umask                              # valor actual
+umask                              # valor actual (por defecto 0022 en RHEL 10)
 umask 077                          # solo para esta sesión
+grep ^UMASK /etc/login.defs        # valor por defecto del sistema (lo aplica pam_umask al iniciar sesión)
 echo 'umask 027' >> /home/ana/.bashrc   # persistente para ana
 # para todos: un archivo en /etc/profile.d/, p. ej. /etc/profile.d/umask.sh
 ```
@@ -42,11 +43,14 @@ echo 'umask 027' >> /home/ana/.bashrc   # persistente para ana
 ssh-keygen -t ed25519              # crea la llave en ~/.ssh/
 ssh-copy-id ana@servidor2          # copia la pública al servidor
 ssh ana@servidor2                  # entra sin contraseña
-vim /etc/ssh/sshd_config.d/10-examen.conf
+vim /etc/ssh/sshd_config.d/00-examen.conf
 # PasswordAuthentication no
 # PermitRootLogin no
 sshd -t && systemctl reload sshd   # valida y aplica
+sshd -T | grep -i permitrootlogin  # valor efectivo
 ```
+
+En RHEL 10 `PermitRootLogin` vale `prohibit-password` por defecto (root solo entra con clave). En sshd gana el primer valor leído y los archivos de `sshd_config.d` se leen en orden alfabético: usa un prefijo bajo como `00-`.
 
 ### Modos de SELinux
 
@@ -62,7 +66,7 @@ sestatus                           # resumen completo
 ```bash
 ls -Z /var/www/html                # contexto de archivos
 ps -eZ | grep httpd                # contexto de procesos
-dnf install -y policycoreutils-python-utils   # trae semanage
+dnf install -y policycoreutils-python-utils   # trae semanage en RHEL 10
 semanage fcontext -a -t httpd_sys_content_t "/web(/.*)?"   # regla persistente
 restorecon -Rv /web                # aplica la regla a lo existente
 semanage fcontext -l | grep '^/web'

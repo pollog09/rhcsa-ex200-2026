@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Pregunta } from "@/lib/esquema";
 import { DOMINIOS } from "@/lib/dominios";
@@ -38,6 +38,12 @@ export default function PracticaCliente({ tareas }: { tareas: Pregunta[] }) {
       ),
     [tareas, dominio, dificultad, estado, progreso.tareas],
   );
+
+  // La lista se pinta en el cliente: al llegar con #id (desde Objetivos), baja hasta esa tarea
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (id) document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
   const base = tareas.filter((t) => !dominio || t.dominio === dominio);
   const hechas = base.filter((t) => progreso.tareas[t.id]).length;

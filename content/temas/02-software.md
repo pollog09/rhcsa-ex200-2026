@@ -62,8 +62,10 @@ gpgcheck=0
 
 ```bash
 dnf clean all ; dnf repolist    # limpia caché y comprueba
-# alternativa rápida (luego revisa el .repo creado)
+# alternativa rápida (RHEL 10 usa dnf 4): crea el .repo, revísalo y agrega gpgcheck
 dnf config-manager --add-repo http://repo.ejemplo.com/rhel10/BaseOS
+dnf config-manager --disable <id> ; dnf config-manager --enable <id>
+rpm --import http://repo.ejemplo.com/RPM-GPG-KEY   # si te dan la clave, deja gpgcheck=1
 ```
 
 ### Repositorio local desde la ISO
@@ -78,16 +80,19 @@ mount -o loop,ro /root/rhel-10.iso /mnt/iso   # o /dev/sr0
 
 ```bash
 dnf install -y flatpak                        # si no está instalado
-flatpak remote-add --if-not-exists flathub \
-  https://dl.flathub.org/repo/flathub.flatpakrepo   # agrega un repo Flatpak
+flatpak remote-add --if-not-exists rhel \
+  https://flatpaks.redhat.io/rhel.flatpakrepo    # remoto oficial de Red Hat
 flatpak remotes                               # lista los repos Flatpak
+flatpak remote-ls --app rhel                  # aplicaciones que ofrece el remoto
 flatpak search calculator                     # busca aplicaciones
-flatpak install -y flathub org.gnome.Calculator   # instala
+flatpak install -y rhel org.gnome.Calculator  # instala (como root: para todo el sistema)
 flatpak list --app                            # aplicaciones instaladas
 flatpak run org.gnome.Calculator              # ejecuta
 flatpak uninstall -y org.gnome.Calculator     # desinstala
-flatpak remote-delete flathub                 # quita el repo
+flatpak remote-delete rhel                    # quita el repo
 ```
+
+Con suscripción activa no necesitas credenciales para el remoto `rhel`. Sin suscripción: `podman login flatpaks.registry.redhat.io` y copia `$XDG_RUNTIME_DIR/containers/auth.json` a `/etc/flatpak/oci-auth.json`. En el examen normalmente te dan un remoto propio con su `.flatpakrepo`.
 
 ## Así lo piden en el examen
 
