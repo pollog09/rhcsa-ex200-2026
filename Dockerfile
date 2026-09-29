@@ -1,5 +1,5 @@
 # ---- 1. Dependencias ----
-FROM node:24-alpine AS deps
+FROM docker.io/library/node:24-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 # npm install respeta package-lock.json; se usa en lugar de "npm ci" porque el lock
@@ -7,7 +7,7 @@ COPY package.json package-lock.json ./
 RUN npm install --no-audit --no-fund
 
 # ---- 2. Build (valida las preguntas y genera las páginas estáticas) ----
-FROM node:24-alpine AS builder
+FROM docker.io/library/node:24-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1 \
     NEXT_OUTPUT=standalone
@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # ---- 3. Imagen final mínima ----
-FROM node:24-alpine AS runner
+FROM docker.io/library/node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
